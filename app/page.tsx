@@ -16,6 +16,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { ChevronDown } from "lucide-react"
+import Image from "next/image";
 
 function extractSourceNumbers(content: string): number[] {
   const matches = content.matchAll(/【\{*source_(\d+)\}*】/g);
@@ -126,32 +127,55 @@ export default function Chat() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 + index * 0.1, duration: 0.2 }}
                               >
-                                <Card className="flex-none p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="flex-none inline-flex items-center justify-center w-6 h-6 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                      {sourceNum}
-                                    </span>
-                                    <div className="text-sm">
-                                      <div className="font-medium">
+                                <HoverCard>
+                                  <HoverCardTrigger asChild>
+                                    <a
+                                      href={source?.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block"
+                                    >
+                                      <Card className="flex-none p-3 bg-muted/30 hover:bg-muted/40 hover:shadow-md transition-all cursor-pointer border border-border/50 hover:border-border">
+                                        <div className="flex items-center space-x-3">
+                                          <span className="flex-none inline-flex items-center justify-center w-7 h-7 text-xs font-medium rounded-full bg-blue-100 text-blue-800 shadow-sm">
+                                            {sourceNum}
+                                          </span>
+                                          <div className="text-sm min-w-0">
+                                            <div className="font-medium truncate">
+                                              {source?.filename || `Source ${sourceNum}`}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                              <span className="inline-block w-2 h-2 rounded-full bg-blue-500/40" />
+                                              Click to view source
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </Card>
+                                    </a>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent 
+                                    side="top" 
+                                    className="w-80 p-0 overflow-hidden"
+                                  >
+                                    <div className="relative aspect-video bg-muted">
+                                      <Image
+                                        src="/placeholder.png"
+                                        alt="Preview"
+                                        fill
+                                        className="object-cover transition-all"
+                                        sizes="320px"
+                                      />
+                                    </div>
+                                    <div className="p-3">
+                                      <div className="font-medium text-sm mb-1">
                                         {source?.filename || `Source ${sourceNum}`}
                                       </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {source?.url ? (
-                                          <a 
-                                            href={source.url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="hover:underline"
-                                          >
-                                            View source
-                                          </a>
-                                        ) : (
-                                          'No URL available'
-                                        )}
-                                      </div>
+                                      <p className="text-xs text-muted-foreground line-clamp-2">
+                                        Preview of the matching slide.
+                                      </p>
                                     </div>
-                                  </div>
-                                </Card>
+                                  </HoverCardContent>
+                                </HoverCard>
                               </motion.div>
                             );
                           })}

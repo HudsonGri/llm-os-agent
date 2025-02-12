@@ -104,13 +104,19 @@ const inlineMarkdownComponents = {
 interface AssistantMessageProps {
   message: string;
 }
-
 export default function AssistantMessage({ message }: AssistantMessageProps) {
   const parts = message.split(/【\{*source_(\d+)\}*】/);
+  const cleanMessage = message.replace(/【\{*source_\d+\}*】/g, '');
   
   return (
     <>
-      {parts.map((part, index) => {
+    <ReactMarkdown 
+              components={inlineMarkdownComponents}
+            >
+              {cleanMessage}
+            </ReactMarkdown>
+      
+      {/* {parts.map((part, index) => {
         if (index % 2 === 0) {
           // Render non-hover parts as inline markdown.
           return (
@@ -145,7 +151,7 @@ export default function AssistantMessage({ message }: AssistantMessageProps) {
             </HoverCard>
           );
         }
-      })}
+      })} */}
     </>
   );
 }

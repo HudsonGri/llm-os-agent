@@ -1,6 +1,5 @@
-import Link from 'next/link';
 import React, { memo } from 'react';
-import ReactMarkdown, { type Components } from 'react-markdown';
+import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 // import { CodeBlock } from './code-block';
 
@@ -104,9 +103,11 @@ const remarkPlugins = [remarkGfm];
 
 const NonMemoizedMarkdown = ({ children }: { children: string }) => {
   return (
-    <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
-      {children}
-    </ReactMarkdown>
+    <div className="prose dark:prose-invert prose-sm max-w-none">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {children}
+      </ReactMarkdown>
+    </div>
   );
 };
 
