@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     system: `You are a helpful assistant specialized in answering questions about the course content.
     Always check your course slide knowledge base before answering. 
     Only respond with information from tool calls; if no relevant information is found, respond with "Sorry, I don't know."
-    If you use a specific course slide content, mention it by stating 【source_NUMBER】 at the very end of your response (e.g. 【source_1】).
+    If you use a specific course slide content, mention it by stating 【source_NUMBER】 at the very end of your response (e.g. 【source_1】) You can only cite a single source once, so if you cite a source, don't cite it again in the same response.
     For each response, you must first call the tagResponse tool to categorize your response with a relevant topic.`,
     messages,
     tools: {
