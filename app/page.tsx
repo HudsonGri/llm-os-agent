@@ -54,9 +54,13 @@ interface Message {
       topic?: string;
       similarity?: number;
       name?: string;
+      filename?: string;
+      url?: string;
     } | Array<{
       similarity: number;
       name: string;
+      filename?: string;
+      url?: string;
     }>;
   }>;
 }
@@ -107,28 +111,50 @@ export default function Chat() {
                       >
                         Referenced Sources:
                       </motion.div>
-                      <ScrollArea className="w-full whitespace-nowrap rounded-md" type="scroll">
-                        <div className="flex space-x-2 pb-2">
-                          {extractSourceNumbers(m.content).map((sourceNum, index) => (
-                            <motion.div
-                              key={sourceNum}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.3 + index * 0.1, duration: 0.2 }}
-                            >
-                              <Card className="flex-none p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
-                                <div className="flex items-center space-x-2">
-                                  <span className="flex-none inline-flex items-center justify-center w-6 h-6 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                    {sourceNum}
-                                  </span>
-                                  <div className="text-sm">
-                                    <div className="font-medium">Source {sourceNum}</div>
-                                    <div className="text-xs text-muted-foreground">Lorem ipsum preview...</div>
+                      <ScrollArea className="w-full whitespace-nowrap rounded-md" type="always">
+                        <div className="flex gap-2 pb-2 min-w-min">
+                          {extractSourceNumbers(m.content).map((sourceNum, index) => {
+                            const sourceInfo = m.toolInvocations
+                              ?.find(t => t.toolName === 'getInformation')
+                              ?.result as any[];
+                            const source = sourceInfo?.[sourceNum - 1];
+                            
+                            return (
+                              <motion.div
+                                key={sourceNum}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.3 + index * 0.1, duration: 0.2 }}
+                              >
+                                <Card className="flex-none p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="flex-none inline-flex items-center justify-center w-6 h-6 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                      {sourceNum}
+                                    </span>
+                                    <div className="text-sm">
+                                      <div className="font-medium">
+                                        {source?.filename || `Source ${sourceNum}`}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {source?.url ? (
+                                          <a 
+                                            href={source.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="hover:underline"
+                                          >
+                                            View source
+                                          </a>
+                                        ) : (
+                                          'No URL available'
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                              </Card>
-                            </motion.div>
-                          ))}
+                                </Card>
+                              </motion.div>
+                            );
+                          })}
                         </div>
                       </ScrollArea>
                     </motion.div>

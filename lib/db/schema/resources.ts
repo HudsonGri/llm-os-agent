@@ -10,7 +10,8 @@ export const resources = pgTable("resources", {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   content: text("content").notNull(),
-
+  filename: varchar("filename", { length: 255 }),
+  url: text("url"),
   createdAt: timestamp("created_at")
     .notNull()
     .default(sql`now()`),

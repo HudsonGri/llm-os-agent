@@ -11,6 +11,7 @@ from psycopg2.extras import execute_values
 from PyPDF2 import PdfReader
 from pptx import Presentation
 from dotenv import load_dotenv
+import argparse
 
 # --- Configuration ---
 
@@ -129,7 +130,7 @@ def generate_embedding(text: str) -> list:
 
 # --- Database Insertion ---
 
-def store_resource_and_embeddings(full_text: str, chunks: list, embeddings: list):
+def store_resource_and_embeddings(full_text: str, chunks: list, embeddings: list, filename: str = None, url: str = None):
     """
     Insert a new resource (course slide content) into the resources table,
     and then insert each chunk along with its embedding into the embeddings table.
@@ -139,7 +140,6 @@ def store_resource_and_embeddings(full_text: str, chunks: list, embeddings: list
     embedding_rows = []
     for chunk, emb in zip(chunks, embeddings):
         emb_id = str(uuid.uuid4())
-        # Convert embedding list to PostgreSQL array literal (e.g., '[0.1,0.2,...]')
         emb_array = "[" + ",".join(map(str, emb)) + "]"
         embedding_rows.append((emb_id, resource_id, chunk, emb_array))
 
@@ -148,18 +148,16 @@ def store_resource_and_embeddings(full_text: str, chunks: list, embeddings: list
         conn.autocommit = True
         cur = conn.cursor()
 
-        # Insert resource record.
-        # Assumes the "resources" table has columns: id, content, created_at, updated_at.
+        # Insert resource record with filename and url
         cur.execute(
             """
-            INSERT INTO resources (id, content)
-            VALUES (%s, %s)
+            INSERT INTO resources (id, content, filename, url)
+            VALUES (%s, %s, %s, %s)
             """,
-            (resource_id, full_text,)
+            (resource_id, full_text, filename, url)
         )
 
-        # Bulk insert into the embeddings table.
-        # Assumes the "embeddings" table has columns: id, resource_id, content, embedding.
+        # Bulk insert into the embeddings table
         insert_query = """
             INSERT INTO embeddings (id, resource_id, content, embedding)
             VALUES %s
@@ -177,10 +175,14 @@ def store_resource_and_embeddings(full_text: str, chunks: list, embeddings: list
 # --- Main Ingestion Pipeline ---
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python ingest_pdf.py <path_to_file>")
-        sys.exit(1)
-    file_path = sys.argv[1]
+    parser = argparse.ArgumentParser(description='Ingest a file into the knowledge base.')
+    parser.add_argument('file_path', help='Path to the file to ingest')
+    parser.add_argument('--url', help='URL associated with the file')
+    args = parser.parse_args()
+
+    file_path = args.file_path
+    filename = os.path.basename(file_path)
+    url = args.url
 
     print(f"Extracting text from {file_path} ...")
     _, ext = os.path.splitext(file_path)
@@ -204,7 +206,7 @@ def main():
         embeddings.append(emb)
 
     print("Storing resource and embeddings into the database ...")
-    store_resource_and_embeddings(full_text, chunks, embeddings)
+    store_resource_and_embeddings(full_text, chunks, embeddings, filename, url)
 
 if __name__ == "__main__":
     main()
