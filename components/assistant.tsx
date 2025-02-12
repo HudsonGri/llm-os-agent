@@ -18,17 +18,17 @@ const inlineMarkdownComponents: Partial<Components> = {
     </code>
   )),
   ol: memo(({ children, ...props }) => (
-    <ol className="list-decimal list-inside space-y-2 my-4" {...props}>
+    <ol className="list-decimal pl-6 space-y-2 my-4" {...props}>
       {children}
     </ol>
   )),
   li: memo(({ children, ...props }) => (
-    <li className="leading-relaxed" {...props}>
+    <li className="leading-relaxed pl-2" {...props}>
       {children}
     </li>
   )),
   ul: memo(({ children, ...props }) => (
-    <ul className="list-disc list-inside space-y-2 my-4" {...props}>
+    <ul className="list-disc pl-6 space-y-2 my-4" {...props}>
       {children}
     </ul>
   )),

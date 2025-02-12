@@ -5,6 +5,8 @@ import AssistantMessage from '@/components/assistant';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import Image from "next/image";
+import { MessageRating } from './message-rating';
+import { updateChatRating } from '@/lib/actions/chats';
 
 interface Message {
   id: string;
@@ -53,7 +55,7 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
               ) : null;
             })()}
           </div>
-          <div className="p-4 rounded-2xl bg-zinc-200/70 shadow-sm">
+          <div className="p-4 rounded-full bg-zinc-200/70">
             <Markdown>{m.content}</Markdown>
           </div>
         </div>
@@ -70,7 +72,14 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
           <div className="flex items-start gap-4">
             <div className="flex-1 space-y-4">
               <div className="space-y-4">
-                <AssistantMessage message={m.content} />
+                <div className="relative">
+                  <AssistantMessage message={m.content} />
+                  
+                  {/* Rating buttons integrated with the message */}
+                  <div className="mt-2 ml-1">
+                    <MessageRating messageId={m.id} isComplete={m.content.length > 0} />
+                  </div>
+                </div>
                 
                 {/* Referenced Sources */}
                 {extractSourceNumbers(m.content).length > 0 && (
