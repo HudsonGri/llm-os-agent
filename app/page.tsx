@@ -15,7 +15,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { ChevronDown, ArrowUp } from "lucide-react"
+import { ChevronDown, ArrowUp, Square } from "lucide-react"
 import Image from "next/image";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { memo } from "react";
@@ -88,7 +88,7 @@ const sourceComponents = {
   sourceCard: memo(function SourceCard({ sourceNum, source }: { sourceNum: number, source: any }) {
     return (
       <Card key={sourceNum} className="overflow-hidden group">
-        <div className="relative h-24 bg-zinc-100">
+        <div className="relative h-40 bg-zinc-100">
           <Image
             src="/placeholder.png"
             alt="Source preview"
@@ -97,40 +97,20 @@ const sourceComponents = {
             sizes="320px"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 to-transparent" />
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-white">
-            <span className="text-sm font-medium truncate">
-              {source?.filename || `Source ${sourceNum}`}
-            </span>
-            <span className="flex-none bg-zinc-900/40 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium">
-              #{sourceNum}
-            </span>
-          </div>
-        </div>
-        <CardContent className="p-3 space-y-2">
-          <div className="text-sm text-zinc-600 line-clamp-2">
-            {source?.name || 'No preview available'}
-          </div>
-          
-          <div className="space-y-1.5">
-            {source?.similarity && (
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-full bg-zinc-100 rounded-full h-1.5">
-                  <div 
-                    className="bg-blue-500 h-1.5 rounded-full" 
-                    style={{ width: `${source.similarity * 100}%` }}
-                  />
-                </div>
-                <span className="flex-none tabular-nums text-zinc-600">
-                  {(source.similarity * 100).toFixed(0)}%
-                </span>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-2 text-xs">
+          <div className="absolute bottom-3 left-3 right-3">
+            <div className="flex items-center justify-between text-white mb-1">
+              <span className="text-sm font-medium truncate flex-1 mr-2">
+                {source?.filename || `Source ${sourceNum}`}
+              </span>
+              <span className="flex-none bg-zinc-900/40 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium">
+                #{sourceNum}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
-                className="h-7 px-2 text-xs flex-1 group-hover:bg-zinc-100"
+                className="h-7 px-2 text-xs flex-1 bg-white/10 hover:bg-white/20 text-white border-0"
                 asChild
               >
                 <a
@@ -144,9 +124,9 @@ const sourceComponents = {
               <HoverCard>
                 <HoverCardTrigger asChild>
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
-                    className="h-7 w-7 p-0 group-hover:bg-zinc-100"
+                    className="h-7 w-7 p-0 bg-white/10 hover:bg-white/20 text-white border-0"
                   >
                     <ChevronDown className="h-3 w-3" />
                   </Button>
@@ -165,9 +145,22 @@ const sourceComponents = {
                     />
                   </div>
                   <div className="p-3">
-                    <div className="font-medium text-sm mb-1 text-zinc-900">
+                    <div className="font-medium text-sm mb-2 text-zinc-900">
                       {source?.filename || `Source ${sourceNum}`}
                     </div>
+                    {source?.similarity && (
+                      <div className="flex items-center gap-2 text-xs mb-2">
+                        <div className="w-full bg-zinc-100 rounded-full h-1.5">
+                          <div 
+                            className="bg-blue-500 h-1.5 rounded-full" 
+                            style={{ width: `${source.similarity * 100}%` }}
+                          />
+                        </div>
+                        <span className="flex-none tabular-nums text-zinc-600">
+                          {(source.similarity * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    )}
                     <p className="text-xs text-zinc-500">
                       {source?.name || 'No preview available'}
                     </p>
@@ -176,14 +169,14 @@ const sourceComponents = {
               </HoverCard>
             </div>
           </div>
-        </CardContent>
+        </div>
       </Card>
     );
   })
 };
 
 export default function Chat() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } = useChat({
     maxSteps: 3,
   });
   
@@ -459,11 +452,16 @@ export default function Chat() {
                   className="pl-4 pr-12 py-3 w-full text-sm text-zinc-900 bg-zinc-100 rounded-2xl border-0 focus-visible:ring-2 focus-visible:ring-zinc-600/20 focus-visible:ring-offset-1"
                 />
                 <Button 
-                  type="submit" 
+                  type="button" 
                   size="icon"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 bg-zinc-900 hover:bg-zinc-800 rounded-full"
+                  onClick={isLoading ? stop : handleSubmit}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 bg-zinc-900 hover:bg-zinc-800 rounded-full transition-colors"
                 >
-                  <ArrowUp className="h-5 w-5" />
+                  {isLoading ? (
+                    <Square fill="white" className="h-4 w-4" />
+                  ) : (
+                    <ArrowUp className="h-5 w-5" />
+                  )}
                 </Button>
               </div>
             </div>

@@ -1,783 +1,335 @@
 
 --- Chunk 1 ---
 ```html
-<h1>Introduction to Operating Systems</h1>
-
+<p>About RAID – Who defines RAID levels?</p>
+<p>There isn't a single centralized body that manages or defines RAID levels. The concept of RAID was introduced in the late 1980s by researchers at the University of California, Berkeley, but the various RAID levels have been developed and refined over time by industry practitioners, organizations, and standards bodies.</p>
+<p>The most commonly referred to standard for RAID levels is defined by the Storage Networking Industry Association (SNIA). SNIA is a non-profit organization that works on the development and promotion of standards, technologies, and educational services in the storage industry. The RAID Advisory Board, part of SNIA, provides information and guidance on RAID technologies.</p>
+<p>Additionally, RAID levels are often influenced by industry practices, evolving technologies, and the needs of users and organizations, so the definitions and implementations may vary across different sources and contexts.</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>We will begin by exploring two protocols: the Open Systems Interconnection protocol or OSI and the Internet Protocol or IP protocol.</p>
+<p>These two protocols are at the core of the modern Internet. They have many similarities, but essentially differ on how rigid each protocol is. [CLICK]</p>
+<p>The Open Systems Interconnection protocol or OSI is an ISO standard. ISO is the International Organization for Standardization. The OSI protocol is characterized by having strict communication layers. A system that is certified to follow the OSI protocol must follow all the rules about how data is transmitted between layers and managed by the system. It is therefore a rigid protocol that makes for stable systems because they must follow strict rules. [CLICK]</p>
+<p>The Internet Protocol or IP protocol first appeared as part of the military network ARPAnet. Whereas the OSI protocol favors stability, the IP protocol favors innovation. The IP protocol is characterized by being a loosely layered model. This means that applications may choose to bypass or change how some layers communicate to accommodate for their needs. This promotes innovation since it is in essence a simpler model.</p>
+<p>Next, we will investigate each of these systems in detail.</p>
+<p>[CLICK – Next Slide]</p>
 <p>Welcome!</p>
 <p>Speaker Notes: ON SCREEN</p>
-
-<p>Welcome! In this lecture, we will look at a brief history of operating systems. We will look at how they evolved over the years in parallel to the evolution of the hardware that they run on.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Goals</h2>
-<ul>
-<li>Describe generations of<br>operating systems and their influences</li>
-<li>Analyze effects of <br>multiprogramming vs. uniprogramming</li>
-<li>Identify components and central abstractions of OS</li>
-</ul>
-<p>Speaker Notes: ON SCREEN</p>
-
-<p>By the end of this lecture, you should be able to: [CLICK]</p>
-
-<p>Describe the generations of operating systems and their influences; [CLICK]</p>
-
-<p>Analyze effects of multiprogramming vs. uniprogramming; and [CLICK]</p>
-
-<p>Identify components and central abstractions of OS</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Terminology</h2>
-<dl>
-<dt>Algorithm</dt>
-<dd>A set of instructions with finite initial store and state, a starting point, and unambiguous ordering until the endpoint (halt)</dd>
-<dt>Flow chart / pseudocode</dt>
-<dt>Program</dt>
-<dd>The sequence of instructions that embody an algorithm</dd>
-<dd>Source  Assembly  Machine Code</dd>
-</dl>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>But first, let’s look at some terminology. [CLICK]</p>
-
-<p>Algorithm: A set of instructions with finite initial store and state, a starting point, and unambiguous ordering until the endpoint (halt point).</p>
-
-<p>Can be represented by a flow chart or a pseudocode. [CLICK]</p>
-
-<p>Program: The sequence of instructions that embody an algorithm. It can be the Source code or Machine Code.</p>
-
+<p>Welcome back! In this lecture, we will begin to explore the internet protocol. Let’s get started!</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 2 ---
 ```html
-<h2>Terminology</h2>
-<dl>
-<dt>Process</dt>
-<dd>A program in execution</dd>
-<dd>Program + process state (current instruction, state of memory / resources)</dd>
-<dt>Job</dt>
-<dd>A task to be completed</dd>
-<dd>Often a program (or collection thereof) awaiting execution or a process during execution</dd>
-</dl>
-<p>The words “process” and “job” are often used interchangeably in practice, but they are slightly different.</p>
-<p>!</p>
+<p>A Tale of Two Protocols</p>
+<p>Open Systems Interconnection (OSI): The Good Child</p>
+<p>Original International Organization for Standardization (ISO) standard</p>
+<p>Based on strictly controlled layers</p>
+<p>Internet Protocol (IP):
+The Troublesome Child</p>
+<p>Created for ARPAnet (U.S. military research)</p>
+<p>Incremental implementation & model (“what works?”)</p>
+<p>Based on loosely layered model</p>
 <p>Speaker Notes: OFF SCREEN</p>
-
-<p>Process: a program in execution Program plus, its Process State. These are represented by the current instruction, state of memory and resources. [CLICK]</p>
-
-<p>Job: a task to be completed.</p>
-
-<p>Often a program or a collection of programs awaiting execution. A “job” can also be a process during execution. [CLICK]</p>
-
-<p>The words ‘process’ and ‘job’ are often used interchangeably in practice, but they are slightly different.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Why Do We Need an OS?</h2>
-<p>How to load a program<br>onto a computer?</p>
-
-<p>Mini-toggle switch per bit in<br>the data register</p>
-
-<p>Mini-toggle switch per bit in<br>the address register</p>
-
-<p>Button to load data from<br>register into memory</p>
-<p>Altair 8800</p>
-<p>Speaker Notes: OFF SCREEN</p>
-<p>Why do we need an OS? For example, to load a program onto a computer.</p>
-
-<p>So, how to load a program onto a computer?</p>
-<p>The OS helps us with repetitive or complex tasks that we want to achieve with a computer. For example, loading a program can involve a series of precise but repetitive tasks such as loading data from main memory to a register. [CLICK]</p>
-
-<p>The Alteir 8800 is an example of an old computer that did not have an Operating System. Programs had to be loaded manually before execution. Even to run a simple program involved a series of tasks to be accomplished manually by the operator/programmer. Let’s watch a video of how the Altair 8800 works.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Altair 8800</h2>
-<p>Video team, please play the following video in its entirety: <a href="https://youtu.be/EV1ki6LiEmg">https://youtu.be/EV1ki6LiEmg</a></p>
-
-<p>If the quality is high enough, please play full screen. If not, please insert the video into this slide.</p>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>[PAUSE FOR A COUPLE OF SECONDS THEN CLICK TO NEXT SLIDE]</p>
-
+<p>We will begin by exploring two protocols: the Open Systems Interconnection protocol or OSI and the Internet Protocol or IP protocol.</p>
+<p>These two protocols are at the core of the modern Internet. They have many similarities, but essentially differ on how rigid each protocol is. [CLICK]</p>
+<p>The Open Systems Interconnection protocol or OSI is an ISO standard. ISO is the International Organization for Standardization. The OSI protocol is characterized by having strict communication layers. A system that is certified to follow the OSI protocol must follow all the rules about how data is transmitted between layers and managed by the system. It is therefore a rigid protocol that makes for stable systems because they must follow strict rules. [CLICK]</p>
+<p>The Internet Protocol or IP protocol first appeared as part of the military network ARPAnet. Whereas the OSI protocol favors stability, the IP protocol favors innovation. The IP protocol is characterized by being a loosely layered model. This means that applications may choose to bypass or change how some layers communicate to accommodate for their needs. This promotes innovation since it is in essence a simpler model.</p>
+<p>Next, we will investigate each of these systems in detail.</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 3 ---
 ```html
-<h2>Why Do We Need an OS?</h2>
-<p>How to Load a Program<br>Onto a Computer?</p>
-
-<p>Mini-toggle switch per bit in<br>the data register</p>
-
-<p>Mini-toggle switch per bit in<br>the address register</p>
-
-<p>Button to load data from<br>register into memory</p>
-<p>Altair 8800</p>
-<p>How to Access I/O<br>Devices?</p>
-
-<p>Uniform interface: <br>Use the same read and write routines</p>
-
-<p>Safety: <br>Restrict access to<br>read/write routines</p>
-<p>What About Running<br>Multiple Programs?</p>
-
-<ul>
-<li>Manage resources</li>
-<li>Protect private info</li>
-<li>Facilitate Interactions</li>
-</ul>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>The OS also helps accessing I/O devices</p>
-
-<p>The OS provides the user with a uniform interface to access input and output devices. It often standardizes input and output routines. [CLICK]</p>
-
-<p>The OS also provides a layer of safety. It restricts access to read/write routines to users and process. This keeps users or processes from accessing resources that they shouldn’t, which can disrupt the function of the entire operating system. [CLICK]</p>
-
-<p>What about running multiple programs?</p>
-
-<p>The OS also Manages resources, Protects private information, and Facilitates Interactions between multiple users, processes, and programs. In modern OSs, we are used to multi-tasking: write an email, while glancing at the web browser and listening to some music. The OS makes sure all these programs and tasks are accomplished for the user.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Where Does It Fit?</h2>
-<p>(Adapted from Tanenbaum & Bos, 2015)</p>
-<table>
-<tr>
-<td>User interface program</td>
-</tr>
-<tr>
-<td>Operating system</td>
-</tr>
-<tr>
-<td>User mode</td>
-</tr>
-<tr>
-<td>Kernel mode</td>
-</tr>
-<tr>
-<td>Software</td>
-</tr>
-<tr>
-<td>Hardware</td>
-</tr>
-</table>
-<table>
-<tr>
-<td>Web browser</td>
-</tr>
-<tr>
-<td>Email reader</td>
-</tr>
-<tr>
-<td>Music player</td>
-</tr>
-</table>
+<p>OSI Layers</p>
+<p>This Photo by Unknown Author is licensed under CC BY</p>
 <p>Speaker Notes: ON SCREEN</p>
-
-<p>But where does the OS fit in the organization of a typical personal computer system?</p>
-
-<p>The OS is the layer of software that exists between the hardware and the user-interface program.</p>
-
-<p>While the user-interface often seems to be part of the OS, it is not. It is one of the programs that it helps to execute for the user.</p>
-
-<p>This is more transparent, for example, to Unix/Linux users that are used to changing user interfaces, while it may seem stranger to Windows or Mac OS users, that cannot choose between different user interface programs.</p>
-
+<p>The OSI model describes seven layers that computer systems use to communicate over a network. It was the first standard model for network communications, adopted by all major computer and telecommunication companies in the early 1980s</p>
+<p>The modern Internet is not based on OSI, but on the simpler TCP/IP model. However, the OSI 7-layer model is still widely used, as it helps visualize and communicate how networks operate, and helps isolate and troubleshoot networking problems.</p>
+<p>OSI was introduced in 1983 by representatives of the major computer and telecom companies, and was adopted by ISO as an international standard in 1984.</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 4 ---
 ```html
-<h2>What Is the <br>OS’s Job?</h2>
-<ul>
-<li>Resource manager</li>
-<li>Extended machine</li>
-</ul>
-<p>Speaker Notes: ON SCREEN</p>
-
-<p>The OS has two primary jobs: [CLICK]</p>
-
-<p>Resource Manager and [CLICK]</p>
-
-<p>To provide an extended machine to the user. [CLICK]</p>
-
-<p>Let’s begin with OS as a resource manager.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>OS as a Resource Manager</h2>
-<dl>
-<dt>Process Manager</dt>
-<dd>Next program to be<br>executed? Time to be given to each program?</dd>
-<dt>Memory Manager</dt>
-<dd>Best use of memory to run as many programs as possible</dd>
-<dt>I/O Device (e.g., Printer) Manager</dt>
-<dd>Which program should use a particular I/O device?</dd>
-</dl>
+<p>OSI Layers</p>
+<p>Physical</p>
+<p>Provides electrical connections to a transmission medium. [BITS]</p>
+<p>Data Link</p>
+<p>Packet framing. Hardware addressing. (MAC) [FRAME]</p>
+<p>One device to another (Ethernet)</p>
+<p>Network</p>
+<p>Addresses packets and routes them to provide end-to-end communication. [PACKET]</p>
+<p>One network to another (IPv4 or v6)</p>
+<p>Transport</p>
+<p>Transfers data reliably or unreliably.</p>
+<p>Reliable transfer involves a connection.</p>
+<p>One process to another (TCP/UDP)</p>
+<p>Session</p>
+<p>Opens / Closes session between applications.</p>
+<p>Presentation</p>
+<p>Formats data (e.g., compression, encryption).</p>
+<p>Application</p>
+<p>Provides the user interface.</p>
+<p>One application to another (socket port)</p>
 <p>Speaker Notes: OFF SCREEN</p>
-
-<p>As a Resource Manager, the OS works as: [CLICK]</p>
-
-<p>A Process Manager: Typically, considering modern interactive OSs, such as the ones we use in our laptops and desktops, multiple programs and processes alternate execution every second. The OS switches between them continuously, giving the user the illusion that those programs are executing at the same time, in parallel. In reality, each program runs for a fraction of a second and lets the next program run. [CLICK]</p>
-
-<p>One of the jobs of the OS is to define the next program to be executed, which programs have priority, and which programs can wait. [CLICK]</p>
-
-<p>As a Memory Manager, the OS decides what is the best use of the memory space available. It decides which programs to load to main memory, which programs to keep on fixed storage (e.g., SSD or hard drive), and which processes or programs to load into cache memory. [CLICK]</p>
-
-<p>The OS also manages the I/O devices. It communicates to output devices such as disks, printers, and displays, and manages input such as from mouse, keyboard, camera, etc.</p>
-
+<p>Let’s exam each of the layers: [CLICK]</p>
+<p>The physical layer is responsible for the physical cable or wireless connection between network nodes. It defines the connector, the electrical cable or wireless technology connecting the devices, and is responsible for transmission of the raw data, which is simply a series of 0s and 1s, while taking care of bit rate control. [CLICK]</p>
+<p>The data link layer establishes and terminates a connection between two physically-connected nodes on a network. It breaks up packets into frames and sends them from source to destination. This layer is composed of two parts—Logical Link Control (LLC), which identifies network protocols, performs error checking and synchronizes frames, and Media Access Control (MAC) which uses MAC addresses to connect devices and define permissions to transmit and receive data. [CLICK]</p>
+<p>The network layer has two main functions. One is breaking up segments into network packets, and reassembling the packets on the receiving end. The other is routing packets by discovering the best path across a physical network. The network layer uses network addresses (typically Internet Protocol addresses) to route packets to a destination node. [CLICK]</p>
+<p>The transport layer takes data transferred in the session layer and breaks it into “segments” on the transmitting end. It is responsible for reassembling the segments on the receiving end, turning it back into data that can be used by the session layer. The transport layer carries out flow control, sending data at a rate that matches the connection speed of the receiving device, and error control, checking if data was received incorrectly and if not, requesting it again. [CLICK]</p>
+<p>The session layer creates communication channels, called sessions, between devices. It is responsible for opening sessions, ensuring they remain open and functional while data is being transferred, and closing them when communication ends. The session layer can also set checkpoints during a data transfer—if the session is interrupted, devices can resume data transfer from the last checkpoint. [CLICK]</p>
+<p>The presentation layer prepares data for the application layer. It defines how two devices should encode, encrypt, and compress data so it is received correctly on the other end. The presentation layer takes any data transmitted by the application layer and prepares it for transmission over the session layer. [CLICK]</p>
+<p>The application layer is used by end-user software such as web browsers and email clients. It provides protocols that allow software to send and receive information and present meaningful data to users. A few examples of application layer protocols are the Hypertext Transfer Protocol (HTTP), File Transfer Protocol (FTP), Post Office Protocol (POP), Simple Mail Transfer Protocol (SMTP), and Domain Name System (DNS).</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 5 ---
 ```html
-<h2>OS as a Resource Manager</h2>
-<p>(Ward, 2014)</p>
-<p>Speaker Notes: ON SCREEN</p>
-
-<p>In many ways, the OS can be compared to a one-man band that must perform each task correctly and the right time so that it can provide a good user-experience to the user.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>What Is the <br>OS’s Job?</h2>
-<ul>
-<li>Resource manager</li>
-<li>Extended machine</li>
-<li>Provides user programs with a better, simpler, cleaner, model of the computer</li>
-</ul>
-<p>Speaker Notes: ON SCREEN</p>
-
-<p>The OS also provides an extended machine to the user. This means that it hides the complexities of the underlying hardware and software, and provides users with a better, simpler, cleaner, model of the computer.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>OS as an Extended Machine</h2>
-<p>(Freedman & Morrison, 2022)<br>(Virtue, 2017)</p>
-<p>OS</p>
+<p>IP Layers</p>
+<p>Access</p>
+<p>Ethernet and electrical connections to transmission medium</p>
+<p>Network</p>
+<p>IPv4, IPv6</p>
+<p>Transport</p>
+<p>TCP, UDP</p>
+<p>Application</p>
+<p>Application Protocols:</p>
+<p>FTP, TFTP, HTTP, SMTP, POP, Game Protocol</p>
 <p>Speaker Notes: OFF SCREEN</p>
-
-<p>For example, when we create a text file, an image, or a video, [CLICK]</p>
-
-<p>we typically don’t think about how those bits and bytes will be stored. [CLICK]</p>
-
-<p>All we think about is perhaps in which folder we will save the file so that we can retrieve later. [CLICK]</p>
-
-<p>All the complexity involved with creating, naming, storing, and retrieving the file is managed by the OS.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>OS as an Extended Machine</h2>
-<table>
-<tr>
-<td>Beautiful interface</td>
-<td>Ugly interface</td>
-</tr>
-</table>
-<p>(Tanenbaum & Bos, 2015)</p>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>A good analogy is provided by Tanenbaum and Bos in the Modern Operating Systems book. [CLICK]</p>
-
-<p>We can think about the OS as providing a “beautiful” interface to the users and user programs, [CLICK]</p>
-
-<p>while dealing with the “ugly” interfaces provided by hardware components.</p>
-
-<p>Beautiful here is related to interfaces that are easy to use and effective to humans.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>What the OS Is Not</h2>
-<ul>
-<li>User Interface
-<ul>
-<li>UI is just another program.</li>
-</ul></li>
-<li>System Tools
-<ul>
-<li>Tools are programs to facilitate the development of programs and manage systems.</li>
-</ul></li>
-<li>Libraries
-<ul>
-<li>Libraries are reusable packages of code.</li>
-</ul></li>
-</ul>
-<p>Speaker Notes: ON SCREEN</p>
-
-<p>We have talked a lot about what the OS is. Here are somethings that the OS is not: [CLICK]</p>
-
-<p>The OS is not the user interface. We mentioned OSs such as Linux, that allow the user to switch between different operating systems. [CLICK]</p>
-
-<p>The OS is not the System Tools. Tools that facilitate the development of programs are not part of the OS. [CLICK]</p>
-
-<p>The OS is also not the Libraries it utilizes. Such libraries may allow the OS to function in different ways but are not part of the OS itself.</p>
-
+<p>The Transfer Control Protocol/Internet Protocol (TCP/IP) is older than the OSI model and was created by the US Department of Defense (DoD).</p>
+<p>A key difference between the models is that TCP/IP is simpler, collapsing several OSI layers.</p>
+<p>The TCP/IP protocol only has 4 layers: Access, Network, Transport, and Application.</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 6 ---
 ```html
-<h2>OS Zoo?</h2>
-<ul>
-<li>Mainframe Operating Systems</li>
-<li>Server Operating Systems</li>
-<li>Multiprocessor Operating Systems</li>
-<li>Personal Computer Operation Systems</li>
-<li>Handheld Computer Operation Systems</li>
-<li>Embedded Operation Systems</li>
-<li>Sensor Node Operation Systems</li>
-<li>Real-Time Operation Systems</li>
-<li>Smart Card Operation Systems</li>
-</ul>
-<p>(Tanenbaum & Bos, 2015)</p>
+<p>A Tale of Two Layers</p>
 <table>
+<thead>
 <tr>
-<td>Interactive OSs</td>
-<td>Prioritize user response time</td>
+<th>OSI Layers</th>
+<th>IP Layers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Physical</td>
+<td>Access</td>
 </tr>
 <tr>
-<td>Batch OSs</td>
-<td>Run large sets of tasks or jobs</td>
+<td>Data Link</td>
+<td></td>
 </tr>
 <tr>
-<td>Real Time OSs</td>
-<td>Have well defined task priorities</td>
+<td>Network</td>
+<td>Network</td>
 </tr>
+<tr>
+<td>Transport</td>
+<td>Transport</td>
+</tr>
+<tr>
+<td>Session</td>
+<td></td>
+</tr>
+<tr>
+<td>Presentation</td>
+<td></td>
+</tr>
+<tr>
+<td>Application</td>
+<td>Application</td>
+</tr>
+</tbody>
 </table>
 <p>Speaker Notes: OFF SCREEN</p>
-
-<p>While we, most of the time, refer to OSs as the software that runs on our laptops and desktops, the term refers to a family of OSs that perform similar jobs.</p>
-
-<p>While the list is vast, consisting of OSs for mainframes, servers, handheld, real-time systems, etc., we can classify OSs into three large groups: [CLICK]</p>
-
-<p>Interactive OSs: such as the ones we use in our desktops and laptops. These systems prioritize user response time. If the user interacts, the OS must give immediate, friendly feedback. [CLICK]</p>
-
-<p>Batch OS: These systems are optimized to run typically large sets of tasks or jobs. They prioritize the completion of pre-defined queued tasks instead of user interaction. The user may have to wait for a job to finish to be able to interact or receive feedback from the system. [CLICK]</p>
-
-<p>Real-time OSs: These specialized operating systems typically have well defined task priorities. The avionics system of an airplane, or safety systems of a car may run real-time OSs, that primarily must react/provide feedback within well defined time constraints.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Operating System Generations</h2>
-<p>There exists a mapping of operating system generations to computer generations.</p>
-<ul>
-<li>Generation 1: 1945 – 1955</li>
-<li>Generation 2: 1955 – 1965</li>
-<li>Generation 3: 1965 – 1980</li>
-<li>Generation 4: 1980 – Present</li>
-<li>Generation 5: 1990 – Present</li>
-</ul>
-<p>Speaker Notes: ON SCREEN</p>
-
-<p>Toward understanding how OSs evolved overtime, classifications have been created.</p>
-
-<p>OSs have been classified into 5 Generations. These generations are often closely related to the evolution of the software of OSs and the hardware they ran on. [CLICK]</p>
-
-<p>Let’s look at the first three generations in detail.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Generation 1: Vacuum Tubes and Plugboards</h2>
-<p>1945 – 1955</p>
-<ul>
-<li>Programmer / user = operator</li>
-<li>Single application program at a time – no OS</li>
-</ul>
-<p>(Weik, 1961)</p>
-<table>
-<tr>
-<td>Remmington Rand 409 (Univac)</td>
-<td>Plugboard</td>
-</tr>
-</table>
-<p>(Columbia University, 2001)</p>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>The first generation goes from 1945 until 1955.</p>
-
-<p>While there were computers prior to 1945, this date was chosen since computers from this era share similarities with hardware and software we still use to this date. [CLICK]</p>
-
-<p>Computers of this era were not reliable. Besides knowledge about programming, users had also to learn how to keep the machine running. In later generations, these two tasks were divided between the “programmer”, who knew how to create software for the computer, and the “operator”, who knew how to load programs and maintain the machine working. [CLICK]</p>
-
-<p>So, Generation 1 is said to be characterized by having the users of the computers also be their operators (users wrote the code, loaded into the machines, and maintained the machines). [CLICK]</p>
-
-<p>To program computers of this era, users/programmers used plugboards. Programs were represented by wiring instructions into physical boards that were than connected to the computer. [CLICK]</p>
-
-<p>Another characteristic of Gen 1 computers is that they ran a single program at a time, that were small, and simple compared to today’s standards.</p>
-
+<p>OSI layers 5, 6, 7 are combined into one Application Layer in TCP/IP [CLICK]</p>
+<p>OSI layers 1, 2 are combined into one Network Access Layer in TCP/IP – however TCP/IP does not take responsibility for sequencing and acknowledgement functions, leaving these to the underlying transport layer.</p>
+<p>TCP/IP is a functional model designed to solve specific communication problems, and which is based on specific, standard protocols.
+OSI is a generic, protocol-independent model intended to describe all forms of network communication.
+In TCP/IP, most applications use all the layers, while in OSI simple applications do not use all seven layers. Only layers 1, 2 and 3 are mandatory to enable any data communication.</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 7 ---
 ```html
-<h2>Generation 1: Vacuum Tubes and Plugboards</h2>
-<p>1945 – 1955</p>
-<ul>
-<li>Programmer / user = operator</li>
-<li>Single application program at a time – no OS</li>
-</ul>
-<p>(Fischer, 2008)</p>
-<table>
-<tr>
-<td>Vacuum tubes</td>
-<td>IBM650</td>
-</tr>
-</table>
-<p>(Cushing Memorial Library and Archives, 2009)</p>
+<p>Networking in Modern Operating Systems</p>
+<p>The Internet Protocol</p>
+<p>Protocol Stack
+TCP / IP</p>
+<p>Access</p>
+<p>Network</p>
+<p>Network Interface</p>
+<p>Transport</p>
+<p>Network Driver</p>
+<p>Application</p>
+<p>Sockets-Based Application</p>
+<p>Sockets API</p>
+<p>Network System</p>
+<p>Assisted by the OS</p>
+<p>Handled completely by the OS</p>
 <p>Speaker Notes: OFF SCREEN</p>
-
-<p>One reason why computers were unreliable is that the hardware was primitive. [CLICK]</p>
-
-<p>For example, Logic ports were implemented using Vacuum tubes.</p>
-
-<p>Vacuum tubes required constant maintenance, work within narrow temperature ranges and are prone to failure.</p>
-
-<p>A big part of an operator’s job was to replace or fix vacuum tubes when they failed. [CLICK]</p>
-
-<p>Because of the low reliability, commercial computers were rare. They were mostly deployed in military facilities and research institutes. A famous exemplar of that era is the IBM 650 computer.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Generation 1: Vacuum Tubes and Plugboards</h2>
-<p>1945 – 1955</p>
-<ul>
-<li>Programmer / user = operator</li>
-<li>Single application program at a time – no OS</li>
-</ul>
-<p>(Mahlum, 2008)</p>
-<table>
-<tr>
-<td>IBM 650</td>
-<td>Perforated cards</td>
-</tr>
-</table>
-<p>(Reinhold, 2006)</p>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>By the end of this generation, Perforated cards began to be used. While they do not characterize this generation, perforated cards allowed in increase in program complexity since they replaced the plugboards. [CLICK]</p>
-
-<p>It was now possible to write programs on cards and have machines read them in instead of using plugboards.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Generation 2: Transistors and Batch Systems</h2>
-<p>1955 – 1965</p>
-<table>
-<tr>
-<td>Transistors</td>
-</tr>
-</table>
-<p>(Elliot, 2011)</p>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>Generation 2 (1955 – 65): Transistors and batch systems [CLICK]</p>
-
-<p>Hardware-wise, computers began be constructed using Transistors. Compared to vacuum tubes, transistors are reliable and much faster. Commercial mainframes became more popular and were purchased by large companies.</p>
-
+<p>Modern Operating Systems take care of most of the complexity related with the IP protocol. [CLICK]</p>
+<p>The Access, Network, and Transport layers are handled by the OS, [CLICK]</p>
+<p>while other features are assisted by the OS.
+Communicating over the Internet is a type of IO, and therefore is managed by the OS in kernel mode.</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 8 ---
 ```html
-<h2>Generation 2: Transistors and Batch Systems</h2>
-<p>1955 – 1965</p>
-<ul>
-<li>Users were able to execute sequences of programs called “batches”.</li>
-</ul>
-<table>
-<tr>
-<td>Early batch system</td>
-</tr>
-</table>
-<p>(IBM, 2022)</p>
-<ul>
-<li>OS was necessary.</li>
-<li>The role of the “programmer” <br>became well defined.</li>
-<li>The user was not the operator.</li>
-</ul>
+<p>Packets and Frames</p>
+<p>The Internet Protocol</p>
+<p>IP is a packet-switching network protocol.</p>
+<p>Remember: The size of the data sent over the network is more than just your data due to the overhead of each layer!</p>
+<p>Ethernet Frame (MAC)</p>
+<p>IP Packet (Addr)</p>
+<p>TCP Packet (Ports)</p>
+<p>Protocol</p>
+<p>Application Data</p>
 <p>Speaker Notes: OFF SCREEN</p>
-
-<p>The image shows a typical system of the era. [CLICK]</p>
-
-<p>With the evolution in hardware, users were able to execute sequences of programs in the computers. These sequences of programs were called “batches.” [CLICK]</p>
-
-<p>Operating Systems were necessary. Their job was to load, execute and save the results of one program and do the same for the next until the batch job was finished. [CLICK]</p>
-
-<p>The role of the “programmer” became well defined. Programmers did not know how to “fix” the machine or keep it running and were not typically responsible for loading programs into it or operating the computer. [CLICK]</p>
-
-<p>Operators would receive perforated cards from programmers and load them into the machine for execution. It may sound strange to us, but a programmer of that era might not interact with the computer at all.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Generation 2 is characterized by:</h2>
-<h2>Generation 2: Transistors and Batch Systems</h2>
-<p>1955 – 1965</p>
-<ul>
-<li>Computers built with transistors that were more reliable than Gen1.</li>
-<li>Batch systems that run sequences of programs.</li>
-<li>Systems with rudimentary OSs.</li>
-<li>Users/programmers who were not operators.</li>
-</ul>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>So, Generation 2 is characterized by: [CLICK]</p>
-
-<p>Computers built with transistors were more reliable than Gen1. [CLICK]</p>
-
-<p>Batch systems that run sequences of programs. [CLICK]</p>
-
-<p>Systems had rudimentary OSs. [CLICK]</p>
-
-<p>Users/programmers were not Operators</p>
-
+<p>IP is a packet switching network protocol.</p>
+<p>Packet Switching transmits data across digital networks by breaking it down into blocks or packets for more efficient transfer using various network devices.
+Each time one device sends a file to another, it breaks the file down into packets so that it can determine the most efficient route for sending the data across the network at that time.
+The network devices can then route the packets to the destination where the receiving device reassembles them for use.</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 9 ---
 ```html
-<h2>Generation 2: Transistors and Batch Systems</h2>
-<p>1955 – 1965</p>
-<p>(Semantic Scholar, 2022)</p>
-<table>
-<tr>
-<td>(a) Programmers bring cards to 1401</td>
-</tr>
-<tr>
-<td>(b) 1401 reads batch of jobs onto tape</td>
-</tr>
-<tr>
-<td>(c) Operator carries input tape to 7094</td>
-</tr>
-<tr>
-<td>(d) 7094 does computing</td>
-</tr>
-<tr>
-<td>(e) Operator carries output tape to 1401</td>
-</tr>
-<tr>
-<td>(f) 1401 prints output</td>
-</tr>
-</table>
+<p>Packets and Frames</p>
+<p>Step 1: Data Packets</p>
+<p>(101 Computing, 2021)</p>
+<p>The data is split into several packets of a small size (e.g., 64 KB max).</p>
 <p>Speaker Notes: OFF SCREEN</p>
-
-<p>A typical system of this generation would be composed of input unity, processing unity, and output unity. [CLICK]</p>
-
-<p>Magnetic tapes were typically used for storage. [CLICK]</p>
-
-<p>Perforated cards were typically used for input, [CLICK]</p>
-
-<p>while a printing unit would generate the output. [CLICK]</p>
-
-<p>Once the batches of programs were loaded, there was no interaction with users. Users had to wait until the execution finished to read the output.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Generation 2: Transistors and Batch Systems</h2>
-<h2>Generation 2A: Uniprogrammed</h2>
-<table>
-<tr>
-<td>OS</td>
-</tr>
-<tr>
-<td>Job 1</td>
-</tr>
-<tr>
-<td>OS</td>
-</tr>
-<tr>
-<td>Job 2</td>
-</tr>
-<tr>
-<td>OS</td>
-</tr>
-<tr>
-<td>Job N</td>
-</tr>
-<tr>
-<td>…</td>
-</tr>
-<tr>
-<td>Read</td>
-</tr>
-<tr>
-<td>Process</td>
-</tr>
-<tr>
-<td>Write</td>
-</tr>
-</table>
-<p>Limitation: Large portions of time idle time on I/O (e.g., writing on a tape or other device)</p>
-<p>!</p>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>Generation 2 is divided into 2a and 2b. [CLICK]</p>
-
-<p>Generation 2a: Each program on a batch (set of programs to execute), would complete before another one was loaded into the system for execution.</p>
-
-<p>Programs had typically 3 steps: [CLICK]</p>
-
-<p>Read data from tapes, [CLICK]</p>
-
-<p>Process the data using the CPU, [CLICK]</p>
-
-<p>and Write the results. [CLICK]</p>
-
-<p>The majority of the time was spent either reading data or writing data, with large portions of time in which the CPU was idle, not performing any useful task.</p>
-
-<p>This setup is defined as “Uniprogrammed Batch Systems” since there is a single program running at any given time.</p>
-
-<p>A program in execution is either reading, processing or writing. The other programs in the batch must wait the completion of the previous program to begin execution.</p>
-
+<p>In Ip packet switching, the first step is to split the data into several packets of a small size, for example 64KB.</p>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 10 ---
 ```html
-<h2>Generation 2: Transistors and Batch Systems</h2>
-<h2>Generation 2B: Multiprogrammed</h2>
-<table>
-<tr>
-<td>OS</td>
-</tr>
-<tr>
-<td>Job 1</td>
-</tr>
-<tr>
-<td>OS</td>
-</tr>
-<tr>
-<td>Job 2</td>
-</tr>
-<tr>
-<td>OS</td>
-</tr>
-<tr>
-<td>Job N</td>
-</tr>
-<tr>
-<td>…</td>
-</tr>
-<tr>
-<td>Read</td>
-</tr>
-<tr>
-<td>Process</td>
-</tr>
-<tr>
-<td>Write</td>
-</tr>
-</table>
-<p>Limitation: No user interaction</p>
-<p>!</p>
-<p>Multiprogramming keeps the CPU busy at all times.</p>
+<p>Packets and Frames</p>
+<p>Step 2: Addressing</p>
+<p>(101 Computing, 2021)</p>
+<p>Each packet contains:</p>
+<ul>
+<li>Source IP address</li>
+<li>Destination IP address</li>
+<li>Protocol: HTTP / FTP / SMTP, etc.</li>
+<li>The position of the packet</li>
+<li>The payload (the data itself!)</li>
+<li>Additional information (e.g., error detection, etc.)</li>
+</ul>
 <p>Speaker Notes: OFF SCREEN</p>
-
-<p>Generation 2b is characterized by Multiprogrammed systems. [CLICK]</p>
-
-<p>The aim is to keep the CPU busy at all times.</p>
-
-<p>This is accomplished by utilizing a pipeline approach. [CLICK]</p>
-
-<p>While one program is writing, [CLICK]</p>
-
-<p>another may be executing and yet another may be read. So, a pipeline is formed.</p>
-
-<p>The OS is a little more complex, since it must manage multiple programs in different phases of execution. But overall performance of the system is increased. [CLICK]</p>
-
-<p>One limitation of this system is that there was no interaction with the user. After loading a batch, all users could do was to wait to see the printed results of the execution.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Generation 3: Ics and Multiprogramming</h2>
-<p>1965 – 1980</p>
-<table>
-<tr>
-<td>Integrated circuits</td>
-</tr>
-</table>
-<p>(Elliot, 2011)</p>
-<p>Allowed for miniaturization, performance and even greater reliability</p>
-<p>Software developed directly using terminals</p>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>Generation 3 (1965-80) [CLICK]</p>
-
-<p>This generation is characterized by computers built with Integrated Circuits and users that were operators. [CLICK]</p>
-
-<p>Integrated Circuits allowed for miniaturization, performance and even grater reliability. [CLICK]</p>
-
-<p>Users/programmers developed software directly using terminals.</p>
-
-<p>So, the figure of the operator, loading batches of perforated cards into the systems disappeared (the user is the operator!)</p>
-
+<p>Each packet contains:</p>
+<ul>
+<li>The source IP address</li>
+<li>The destination IP address</li>
+<li>Defines the type of data being transfered: HTTP for webpages, FTP for file transfer, SMTP for email, etc.</li>
+<li>The position of the packet</li>
+<li>The payload (the data itself)</li>
+<li>Additional information such as error detection, etc.</li>
+</ul>
 <p>[CLICK – Next Slide]</p>
 ```
 
 --- Chunk 11 ---
 ```html
-<h2>Generation 3: Ics and Multiprogramming</h2>
-<p>1965 – 1980</p>
-<table>
-<tr>
-<td>Timesharing systems</td>
-</tr>
-</table>
-<p>(Include Help, 2019)</p>
-<p>Computers became fast enough to perform multiple tasks per second.</p>
-<table>
-<tr>
-<td>Terminal 1</td>
-</tr>
-<tr>
-<td>Terminal 2</td>
-</tr>
-<tr>
-<td>Terminal 3</td>
-</tr>
-</table>
-<p>Each user has a terminal.</p>
-<p>Speaker Notes: OFF SCREEN</p>
-
-<p>During this generation, Timesharing systems appeared. [CLICK]</p>
-
-<p>Computers became fast enough to perform multiple tasks per second. This speed allowed large systems (mainframes) to be connected to multiple terminals where users could interact with the system, for example developing and running programs. [CLICK]</p>
-
-<p>Each terminal/user would receive a small amount of processing time sequentially, however, that would happen multiple times per second.</p>
-
-<p>As a result, users had the illusion of real-time interaction with the system, and the illusion that they were they were alone interacting with the system.</p>
-
-<p>[CLICK – Next Slide]</p>
-
-<h2>Operating System Generations</h2>
+<p>Packets and Frames</p>
+<p>Step 3: Routing</p>
+<p>(101 Computing, 2021)</p>
 <ul>
-<li>Generation 1: 1945 – 1955</li>
-<li>Generation 2: 1955 – 1965</li>
-<li>Generation 3: 1965 – 1980</li>
-<li>Generation 4: 1980 – Present</li>
-<li>Generation 5: 1990 – Present</li>
+<li>All packets are sent across the network.</li>
+<li>Packets are being redirected from one router to another until they reach their destination.</li>
+<li>Packets may follow different routes depending on network traffic.</li>
 </ul>
-<p>Speaker Notes: ON SCREEN</p>
-
-<p>We will not look into the details of the last two generations since we are still living them. They are characterized by personal computers and mobile computers. Additional generations have also been proposed such as a generation of Wearable computers.</p>
-
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Next, all the packets are sent across the network. [CLICK]</p>
+<p>Packets are redirected from one router to another until they reach their destination. [CLICK]</p>
+<p>Packets may follow different routes depending on network traffic.</p>
 <p>[CLICK – Next Slide]</p>
+```
 
-<h2>Ontogeny Recapitulates Phylogeny?</h2>
-<p>Each new “species” of computer<br>Goes through same development as “ancestors”</p>
-<p>Consequence of impermanence</p>
-<p>Text often looks at “obsolete” concepts</p>
-<p>Changes in technology may bring them back<br>Happens with large memory, protection hardware, disks, virtual memory</p>
-<p>(Tanenbaum & Bos, 2015)</p>
-<p>Speaker Notes: ON SCREEN</p>
-
-<p>By looking at the generations of computers and operating systems we see a pattern in which limitations and constraints periodically emerge and are overcome. [CLICK]</p>
-
-<p>Old computers had very limited memory and storage. Programmers of that era had to learn how to deal with those constraints. [CLICK]</p>
-
-<p>As computers evolved, large amounts of memory and storage became available at lower cost. Those “old” techniques seamed obsolete. Until wearables and embedded computers became popular and those limitations and the strategies to overcome them became relevant again.</p>
-
-<p>Put simply, it is important to learn about the strategies and approaches that surround OSs. Even if they don’t seem immediately relevant anymore, they might become in the near future.</p>
-
+--- Chunk 12 ---
+```html
+<p>Packets and Frames</p>
+<p>Step 4: Error Detection</p>
+<p>(101 Computing, 2021)</p>
+<ul>
+<li>The receiving computer checks whether all the packets have arrived.</li>
+<li>If a packet is missing (lost packet) or has been corrupted, the receiving computer automatically asks for the sender to resend the missing packet.</li>
+</ul>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>The receiving computer checks whether all the packets have arrived. [CLICK]</p>
+<p>In TCP, if a packet is missing (lost packet) or has been corrupted, the receiving computer automatically asks for the sender to resend the missing packet.</p>
 <p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 13 ---
+```html
+<p>Packets and Frames</p>
+<p>Step 5: Reordering</p>
+<p>(101 Computing, 2021)</p>
+<ul>
+<li>Once all packets have been received, they need to be re-ordered so that the data can be processed by the receiving computer.</li>
+</ul>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Once all packets have been received, they need to be re-ordered so that the data can be processed by the receiving computer.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 14 ---
+```html
+<p>Each IP address is unique (Internet-wide) or LAN identifier for a host or group.</p>
+<p>Internet Protocol Addressing</p>
+<p>An IPv4 Address</p>
+<p>172 . 16 . 254 . 1</p>
+<p>10101100 . 00010000 . 11111110 . 00000001</p>
+<p>One byte = 8 bits</p>
+<p>Thirty-two bits ( 4x8) or 4 bytes</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Currently most IP addresses are using the IPv4 format, based on 4 numbers between 0 and 255 separated by a dot.</p>
+<p>The IPv4 protocol however is currently being upgraded to the IP version 6 (IPv6) internet protocol.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 15 ---
+```html
+<p>Each IP address is unique (Internet-wide) or LAN identifier for a host or group.</p>
+<p>Internet Protocol Addressing</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>The reason for this upgrade is that there is need to generate more IP addresses to allow more devices (webservers, desktops, laptops, smartphones, smartwatches and other connected objects) to have a unique IP address on the network. [CLICK]</p>
+<p>An IPv6 address is based on 128 bits (instead of 32 bits for an IPv4 address). [CLICK]</p>
+<p>The IPV4 protocol is able to address 4 billion individual devices while IPV6 340 trillion, trillion, trillion.</p>
+<p>This is large enough to give each square inch in the world an IPV6 address. It should last for quite some time.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 16 ---
+```html
+<p>The Internet Protocol</p>
+<p>Delivery Mechanisms</p>
+<p>Unicast</p>
+<p>Multicast</p>
+<p>Broadcast (v4)</p>
+<p>Single Destination</p>
+<p>Group Destination</p>
+<p>All Network Hosts</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>There are three general types of communication in TCP/IP: Unicast, Multicast, and Broadcast. [CLICK]</p>
+<p>A Unicast communication is from one device on the network to another device on the network.
+This type of information transfer is useful when there is a participation of a single sender and a single recipient. So, in short, it is a one-to-one transmission. For example, if a device in a network wants to send the traffic stream(data packets) to another device in another network, then unicast comes into the picture. This is the most common form of data transfer over the networks. [CLICK]</p>
+<p>A MultiCast communication is from one device on the network to many, but not all, devices on the network.
+In multicasting, one/more senders and one/more recipients participate in data transfer traffic. Multicast lets servers direct single copies of data streams to hosts that request it. IP multicast requires the support of some other protocols like Multicast routing for it to work. [CLICK]
+A Broadcast communication is from one device on the network to all devices on the network.
+This is useful when a device in one network wants to transfer packet stream to all the devices over the other network.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 17 ---
+```html
+<p>Thank You For Watching</p>
+<p>References</p>
+<p>101 Computing. (2021). Image of TCP/IP Protocols and Packet Switching [Online Image]. 101 Computing. https://www.101computing.net/tcpip-protocols-and-packet-switching/</p>
 ```
