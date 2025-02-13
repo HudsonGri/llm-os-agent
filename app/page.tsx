@@ -53,6 +53,9 @@ export default function Chat() {
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
+  // Track message completion state
+  const [completedMessages, setCompletedMessages] = React.useState<Set<string>>(new Set());
+
   // Scroll to bottom function
   const scrollToBottom = () => {
     const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
@@ -119,6 +122,16 @@ export default function Chat() {
     }
   }, [messages, updateActiveSources]);
 
+  // Update completed messages when a message is no longer loading
+  React.useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'assistant') {
+        setCompletedMessages(prev => new Set([...prev, lastMessage.id]));
+      }
+    }
+  }, [isLoading, messages]);
+
   // Memoize filtered and sorted sources
   const filteredAndSortedSources = useMemo(() => {
     let sources = [...activeSources];
@@ -156,6 +169,7 @@ export default function Chat() {
                 extractSourceNumbers={extractSourceNumbers}
                 TopicBadge={TopicBadge}
                 onRegenerate={m.role === 'assistant' ? () => reload() : undefined}
+                isComplete={m.role === 'user' || completedMessages.has(m.id)}
               />
             ))}
           </div>
