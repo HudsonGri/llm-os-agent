@@ -31,7 +31,7 @@ function isSourceResult(result: any): result is Array<{
 }
 
 export default function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, stop, reload } = useChat({
     maxSteps: 3,
   });
   
@@ -155,6 +155,7 @@ export default function Chat() {
                 isTopicResult={isTopicResult}
                 extractSourceNumbers={extractSourceNumbers}
                 TopicBadge={TopicBadge}
+                onRegenerate={m.role === 'assistant' ? () => reload() : undefined}
               />
             ))}
           </div>

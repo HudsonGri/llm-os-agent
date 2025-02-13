@@ -35,9 +35,10 @@ interface ChatMessageProps {
   isTopicResult: (result: any) => result is { topic: string };
   extractSourceNumbers: (content: string) => number[];
   TopicBadge: React.ComponentType<{ topic: string }>;
+  onRegenerate?: () => void;
 }
 
-export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, TopicBadge }: ChatMessageProps) {
+export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, TopicBadge, onRegenerate }: ChatMessageProps) {
   return (
     <div 
       className={cn(
@@ -77,7 +78,11 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                   
                   {/* Rating buttons integrated with the message */}
                   <div className="mt-2 ml-1">
-                    <MessageRating messageId={m.id} isComplete={m.content.length > 0} />
+                    <MessageRating 
+                      messageId={m.id} 
+                      isComplete={m.content.length > 0} 
+                      onRegenerate={onRegenerate}
+                    />
                   </div>
                 </div>
                 

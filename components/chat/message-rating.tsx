@@ -1,4 +1,4 @@
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { ThumbsUp, ThumbsDown, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -6,9 +6,10 @@ import { motion } from "framer-motion";
 interface MessageRatingProps {
   messageId: string;
   isComplete?: boolean;
+  onRegenerate?: () => void;
 }
 
-export function MessageRating({ messageId, isComplete = true }: MessageRatingProps) {
+export function MessageRating({ messageId, isComplete = true, onRegenerate }: MessageRatingProps) {
   const [rating, setRating] = useState<'up' | 'down' | null>(null);
 
   if (!isComplete) return null;
@@ -37,6 +38,15 @@ export function MessageRating({ messageId, isComplete = true }: MessageRatingPro
       >
         <ThumbsDown className="h-3.5 w-3.5" />
         <span className="sr-only">Thumbs down</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded-md text-zinc-400 hover:text-zinc-900 transition-colors"
+        onClick={onRegenerate}
+      >
+        <RotateCcw className="h-3.5 w-3.5" />
+        <span className="sr-only">Regenerate response</span>
       </Button>
     </motion.div>
   );
