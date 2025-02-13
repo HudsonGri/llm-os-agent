@@ -64,10 +64,7 @@ export function ChatInput({
               type="button" 
               size="icon"
               onClick={isLoading ? stop : handleSubmit}
-              // disabled={!input.trim() && !isLoading}
-              className={`absolute right-1.5 bottom-[13px] h-8 w-8 ${
-                input.trim() || isLoading ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-zinc-400 cursor-not-allowed'
-              } rounded-full transition-colors`}
+              className="absolute right-1.5 bottom-[13px] h-8 w-8 bg-zinc-900 hover:bg-zinc-800 rounded-full transition-colors"
             >
               {isLoading ? (
                 <Square fill="white" className="h-3 w-3" />
