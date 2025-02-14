@@ -26,13 +26,13 @@ export const SourceCard = memo(function SourceCard({ sourceNum, source }: Source
           className="object-cover"
           sizes="320px"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-zinc-900/60 to-transparent" />
         <div className="absolute bottom-3 left-3 right-3">
           <div className="flex items-center justify-between text-white mb-1">
             <span className="text-sm font-medium truncate flex-1 mr-2">
               {source?.filename || `Source ${sourceNum}`}
             </span>
-            <span className="flex-none bg-zinc-900/40 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium">
+            <span className="flex-none bg-zinc-900/40 backdrop-blur-xs px-2 py-1 rounded-full text-xs font-medium">
               #{sourceNum}
             </span>
           </div>
