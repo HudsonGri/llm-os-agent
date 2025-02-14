@@ -57,14 +57,14 @@ export function ChatInput({
               onChange={(e) => handleInputChange(e as any)}
               onKeyDown={handleKeyDown}
               rows={1}
-              className="pl-4 pr-12 py-3 w-full text-sm text-zinc-900 bg-zinc-100 rounded-2xl border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600/20 focus-visible:ring-offset-1 resize-none overflow-y-auto"
+              className="pl-4 pr-12 py-3 w-full text-sm text-zinc-900 bg-zinc-200 rounded-2xl border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600/20 focus-visible:ring-offset-1 resize-none overflow-y-auto"
               style={{ minHeight: '44px', maxHeight: '200px' }}
             />
             <Button 
               type="button" 
               size="icon"
               onClick={isLoading ? stop : handleSubmit}
-              className="absolute right-1.5 bottom-[13px] h-8 w-8 bg-zinc-900 hover:bg-zinc-800 rounded-full transition-colors"
+              className="absolute right-1.5 bottom-[13px] h-8 w-8 bg-zinc-900 hover:bg-zinc-700 rounded-full transition-colors"
             >
               {isLoading ? (
                 <Square fill="white" className="h-3 w-3" />

@@ -52,9 +52,72 @@ export default function Chat() {
   // Add scroll state management
   const [showScrollButton, setShowScrollButton] = React.useState(false);
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const scrollTimeout = React.useRef<NodeJS.Timeout>();
 
   // Track message completion state
   const [completedMessages, setCompletedMessages] = React.useState<Set<string>>(new Set());
+
+  // Create a wrapper for handleSubmit to show loading immediately
+  const handleSubmitWithLoading = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    // Add loading message immediately
+    const loadingMessage = {
+      id: 'loading',
+      role: 'assistant' as const,
+      content: '',
+    };
+    
+    // Add loading message to messages array
+    const allMessages = [...messages, loadingMessage];
+    
+    // Call the original handleSubmit
+    await handleSubmit(e);
+  };
+
+  // Helper function to check if viewport is at bottom
+  const isAtBottom = React.useCallback((viewport: Element) => {
+    const threshold = 50;
+    const scrolledPosition = viewport.scrollTop + viewport.clientHeight;
+    return scrolledPosition >= viewport.scrollHeight - threshold;
+  }, []);
+
+  // Update scroll button visibility
+  const updateScrollButtonVisibility = React.useCallback(() => {
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) return;
+    
+    // Clear any existing timeout
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    // Set a small delay to ensure accurate scroll position
+    scrollTimeout.current = setTimeout(() => {
+      const shouldShow = !isAtBottom(viewport);
+      setShowScrollButton(shouldShow);
+    }, 100);
+  }, [isAtBottom]);
+
+  // Handle scroll events
+  const handleScroll = React.useCallback(() => {
+    updateScrollButtonVisibility();
+  }, [updateScrollButtonVisibility]);
+
+  // Update scroll button visibility when messages change
+  React.useEffect(() => {
+    updateScrollButtonVisibility();
+  }, [messages, updateScrollButtonVisibility]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+    };
+  }, []);
 
   // Scroll to bottom function
   const scrollToBottom = () => {
@@ -65,30 +128,7 @@ export default function Chat() {
       top: viewport.scrollHeight,
       behavior: 'smooth'
     });
-
-    // Hide the button after scrolling
-    setShowScrollButton(false);
   };
-
-  // Handle scroll events
-  const handleScroll = React.useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    const viewport = event.currentTarget;
-    const isAtBottom = Math.abs((viewport.scrollHeight - viewport.clientHeight) - viewport.scrollTop) < 100;
-    if (isAtBottom) {
-      setShowScrollButton(false);
-    } else {
-      setShowScrollButton(true);
-    }
-  }, []);
-
-  // Check scroll position on new messages
-  React.useEffect(() => {
-    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (!viewport) return;
-    
-    const isAtBottom = Math.abs((viewport.scrollHeight - viewport.clientHeight) - viewport.scrollTop) < 100;
-    setShowScrollButton(!isAtBottom);
-  }, [messages]);
 
   // Optimize source management with useCallback and useMemo
   const updateActiveSources = useCallback((message: Message) => {
@@ -172,6 +212,20 @@ export default function Chat() {
                 isComplete={m.role === 'user' || completedMessages.has(m.id)}
               />
             ))}
+            {isLoading && messages[messages.length - 1]?.role === 'user' && (
+              <ChatMessage
+                key="loading"
+                message={{
+                  id: 'loading',
+                  role: 'assistant',
+                  content: '',
+                }}
+                isTopicResult={isTopicResult}
+                extractSourceNumbers={extractSourceNumbers}
+                TopicBadge={TopicBadge}
+                isComplete={false}
+              />
+            )}
           </div>
         </ScrollArea>
 
@@ -192,7 +246,7 @@ export default function Chat() {
           <ChatInput
             input={input}
             handleInputChange={handleInputChange}
-            handleSubmit={handleSubmit}
+            handleSubmit={handleSubmitWithLoading}
             isLoading={isLoading}
             stop={stop}
           />

@@ -37,7 +37,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
         className={`h-7 w-7 rounded-md ${rating === 'up' ? 'text-zinc-900' : 'text-zinc-400'} transition-colors`}
         onClick={() => setRating(prev => prev === 'up' ? null : 'up')}
       >
-        <ThumbsUp className="h-3.5 w-3.5" />
+        <ThumbsUp className="h-4 w-4" />
         <span className="sr-only">Thumbs up</span>
       </Button>
       <Button
@@ -46,7 +46,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
         className={`h-7 w-7 rounded-md ${rating === 'down' ? 'text-zinc-900' : 'text-zinc-400'} transition-colors`}
         onClick={() => setRating(prev => prev === 'down' ? null : 'down')}
       >
-        <ThumbsDown className="h-3.5 w-3.5" />
+        <ThumbsDown className="h-4 w-4" />
         <span className="sr-only">Thumbs down</span>
       </Button>
       <Button
@@ -55,7 +55,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
         className="h-7 w-7 rounded-md text-zinc-400 hover:text-zinc-900 transition-colors"
         onClick={onRegenerate}
       >
-        <RotateCcw className="h-3.5 w-3.5" />
+        <RotateCcw className="h-4 w-4" />
         <span className="sr-only">Regenerate response</span>
       </Button>
       <Button
@@ -65,9 +65,9 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
         onClick={handleCopy}
       >
         {copied ? (
-          <Check className="h-3.5 w-3.5" />
+          <Check className="h-4 w-4" />
         ) : (
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="h-4 w-4" />
         )}
         <span className="sr-only">Copy response</span>
       </Button>

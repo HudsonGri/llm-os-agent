@@ -7,6 +7,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import Image from "next/image";
 import { MessageRating } from './message-rating';
 import { updateChatRating } from '@/lib/actions/chats';
+import { Loader2 } from "lucide-react";
 
 interface Message {
   id: string;
@@ -57,25 +58,34 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
               ) : null;
             })()}
           </div>
-          <div className="p-4 rounded-full bg-zinc-200/70">
+          <div className="p-4 rounded-3xl bg-zinc-200/70">
             <Markdown>{m.content}</Markdown>
           </div>
         </div>
       ) : m.role === "assistant" ? (
         <div className="group relative max-w-[95%] lg:max-w-[85%] text-zinc-900">
-          <div className="mb-2">
+          {/* <div className="mb-2">
             {(() => {
               const tagResult = m.toolInvocations?.find(t => t.toolName === "tagResponse")?.result;
               return isTopicResult(tagResult) && tagResult.topic ? (
                 <TopicBadge topic={tagResult.topic} />
               ) : null;
             })()}
-          </div>
+          </div> */}
           <div className="flex items-start gap-4">
             <div className="flex-1 space-y-4">
               <div className="space-y-4">
                 <div className="relative">
-                  <AssistantMessage message={m.content} />
+                  {!isComplete && !m.content ? (
+                    <div
+                      className="p-4 flex items-center gap-3"
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
+                      <span className="text-sm text-zinc-500">Generating response...</span>
+                    </div>
+                  ) : (
+                    <AssistantMessage message={m.content} />
+                  )}
                   
                   {/* Rating buttons integrated with the message */}
                   <div className="mt-2 ml-1">
