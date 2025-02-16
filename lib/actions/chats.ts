@@ -1,26 +1,81 @@
+'use server'
 import { db } from '@/lib/db';
 import { chats, type Chat, type NewChat } from '@/lib/db/schema/chats';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { cookies } from 'next/headers';
+import { Message } from 'ai';
 
-export async function createChatMessage(data: Omit<NewChat, 'id' | 'createdAt' | 'updatedAt'>) {
+// Function to get or create a user ID
+export async function getUserId() {
+  const cookieStore = cookies();
+  let userId = cookieStore.get('userId')?.value;
+  
+  if (!userId) {
+    userId = createId();
+    cookieStore.set('userId', userId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365 // 1 year
+    });
+  }
+  
+  return userId;
+}
+
+// Function to create a new conversation
+export async function createConversation() {
+  return createId();
+}
+
+// Enhanced function to save chat messages
+export async function createChatMessage(data: Omit<NewChat, 'createdAt' | 'updatedAt'>) {
   const [chat] = await db.insert(chats).values({
     ...data,
-    id: createId(),
   }).returning();
   return chat;
 }
 
-export async function updateChatRating(messageId: string, rating: 'up' | 'down' | null) {
-  const [chat] = await db
-    .update(chats)
-    .set({ 
-      rating,
-      ratedAt: rating ? new Date() : null,
-    })
-    .where(eq(chats.id, messageId))
-    .returning();
-  return chat;
+// Function to save a message with all metadata
+export async function saveMessage({
+  id,
+  role,
+  content,
+  conversationId,
+  parentMessageId,
+  toolInvocations,
+  userAgent,
+  userIp,
+  tokenCount,
+  processingTime
+}: {
+  id: string;
+  role: 'user' | 'assistant' | 'system' | 'data';
+  content: string;
+  conversationId: string;
+  parentMessageId?: string;
+  toolInvocations?: any;
+  userAgent?: string;
+  userIp?: string;
+  tokenCount?: number;
+  processingTime?: number;
+}) {
+  const userId = await getUserId();
+  
+  return await createChatMessage({
+    id,
+    userId,
+    userIp: userIp || '',
+    userAgent: userAgent || '',
+    role,
+    content,
+    conversationId,
+    parentMessageId,
+    toolInvocations,
+    tokenCount,
+    processingTime
+  });
 }
 
 export async function getConversationMessages(conversationId: string) {
@@ -36,6 +91,20 @@ export async function getMessageById(messageId: string) {
     .select()
     .from(chats)
     .where(eq(chats.id, messageId));
+  return chat;
+}
+
+export async function updateChatRating(messageId: string, rating: 'up' | 'down' | null) {
+  console.log('Updating chat rating for messageId:', messageId, 'with rating:', rating);
+  const [chat] = await db
+    .update(chats)
+    .set({ 
+      rating,
+      ratedAt: rating ? new Date() : null
+    })
+    .where(eq(chats.id, messageId))
+    .returning();
+  console.log('Updated chat rating:', chat);
   return chat;
 }
 

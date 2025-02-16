@@ -121,8 +121,8 @@ interface AssistantMessageProps {
 
 const AssistantMessage = memo(function AssistantMessage({ message }: AssistantMessageProps) {
   // Memoize the clean message to prevent unnecessary recalculation
-  const cleanMessage = useMemo(() => 
-    message.replace(/【\{*source_\d+\}*】/g, ''),
+  const cleanMessage = useMemo(() =>
+    message.replace(/【\{?(?:(?:source_\d+)|s(?:o(?:u(?:r(?:c(?:e)?)?)?)?))\}?】/g, ''),
     [message]
   );
   

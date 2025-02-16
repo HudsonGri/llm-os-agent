@@ -31,8 +31,28 @@ function isSourceResult(result: any): result is Array<{
 }
 
 export default function Chat() {
+  const [conversationId, setConversationId] = React.useState<string | null>(null);
+  
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, reload } = useChat({
     maxSteps: 3,
+    id: conversationId || undefined,
+
+    // This is messing with the request causing a jitter to appear in the UI
+    // TODO: Fix this, without it it wont save in db correctly
+
+    // onResponse: (response) => {
+    //   // Get conversation ID from response headers
+    //   const newConversationId = response.headers.get('x-conversation-id');
+    //   if (newConversationId && !conversationId) {
+    //     setConversationId(newConversationId);
+    //   }
+    // },
+    onFinish: (message) => {
+        setCompletedMessages(prev => new Set([...prev, message.id]));
+    },
+    body: {
+      conversationId,
+    },
   });
   
   // Track active sources in the sidebar
@@ -49,11 +69,6 @@ export default function Chat() {
   // Add sidebar view state
   const [sidebarView, setSidebarView] = React.useState<'sources' | 'dev'>('sources');
 
-  // Add scroll state management
-  const [showScrollButton, setShowScrollButton] = React.useState(false);
-  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
-  const scrollTimeout = React.useRef<NodeJS.Timeout>();
-
   // Track message completion state
   const [completedMessages, setCompletedMessages] = React.useState<Set<string>>(new Set());
 
@@ -69,65 +84,8 @@ export default function Chat() {
       content: '',
     };
     
-    // Add loading message to messages array
-    const allMessages = [...messages, loadingMessage];
-    
     // Call the original handleSubmit
     await handleSubmit(e);
-  };
-
-  // Helper function to check if viewport is at bottom
-  const isAtBottom = React.useCallback((viewport: Element) => {
-    const threshold = 50;
-    const scrolledPosition = viewport.scrollTop + viewport.clientHeight;
-    return scrolledPosition >= viewport.scrollHeight - threshold;
-  }, []);
-
-  // Update scroll button visibility
-  const updateScrollButtonVisibility = React.useCallback(() => {
-    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (!viewport) return;
-    
-    // Clear any existing timeout
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-    }
-
-    // Set a small delay to ensure accurate scroll position
-    scrollTimeout.current = setTimeout(() => {
-      const shouldShow = !isAtBottom(viewport);
-      setShowScrollButton(shouldShow);
-    }, 100);
-  }, [isAtBottom]);
-
-  // Handle scroll events
-  const handleScroll = React.useCallback(() => {
-    updateScrollButtonVisibility();
-  }, [updateScrollButtonVisibility]);
-
-  // Update scroll button visibility when messages change
-  React.useEffect(() => {
-    updateScrollButtonVisibility();
-  }, [messages, updateScrollButtonVisibility]);
-
-  // Cleanup timeout on unmount
-  React.useEffect(() => {
-    return () => {
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
-      }
-    };
-  }, []);
-
-  // Scroll to bottom function
-  const scrollToBottom = () => {
-    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (!viewport) return;
-    
-    viewport.scrollTo({
-      top: viewport.scrollHeight,
-      behavior: 'smooth'
-    });
   };
 
   // Optimize source management with useCallback and useMemo
@@ -166,7 +124,7 @@ export default function Chat() {
   React.useEffect(() => {
     if (!isLoading && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'assistant') {
+      if (lastMessage.role === 'user') {
         setCompletedMessages(prev => new Set([...prev, lastMessage.id]));
       }
     }
@@ -195,11 +153,7 @@ export default function Chat() {
     <div className="flex w-full h-screen bg-zinc-50">
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <ScrollArea 
-          className="flex-1"
-          onScroll={handleScroll}
-          ref={scrollAreaRef}
-        >
+        <ScrollArea className="flex-1">
           <div className="max-w-5xl mx-auto py-6 px-4">
             {messages.map((m) => (
               <ChatMessage
@@ -230,19 +184,6 @@ export default function Chat() {
         </ScrollArea>
 
         <div className="relative">
-          {showScrollButton && (
-            <div className="absolute bottom-[calc(100%+1rem)] left-1/2 -translate-x-1/2 z-10">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={scrollToBottom}
-                className="h-8 px-3 py-2 bg-white/95 shadow-md border border-zinc-200 rounded-full flex items-center gap-2 text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 transition-colors"
-              >
-                <ChevronDown className="h-3 w-3" />
-                Scroll to bottom
-              </Button>
-            </div>
-          )}
           <ChatInput
             input={input}
             handleInputChange={handleInputChange}

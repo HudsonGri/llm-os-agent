@@ -6,7 +6,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import Image from "next/image";
 import { MessageRating } from './message-rating';
-import { updateChatRating } from '@/lib/actions/chats';
 import { Loader2 } from "lucide-react";
 
 interface Message {
@@ -64,19 +63,11 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
         </div>
       ) : m.role === "assistant" ? (
         <div className="group relative max-w-[95%] lg:max-w-[85%] text-zinc-900">
-          {/* <div className="mb-2">
-            {(() => {
-              const tagResult = m.toolInvocations?.find(t => t.toolName === "tagResponse")?.result;
-              return isTopicResult(tagResult) && tagResult.topic ? (
-                <TopicBadge topic={tagResult.topic} />
-              ) : null;
-            })()}
-          </div> */}
           <div className="flex items-start gap-4">
             <div className="flex-1 space-y-4">
               <div className="space-y-4">
                 <div className="relative">
-                  {!isComplete && !m.content ? (
+                  {!m.content && m.role === 'assistant' ? (
                     <div
                       className="p-4 flex items-center gap-3"
                     >
@@ -88,15 +79,18 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                   )}
                   
                   {/* Rating buttons integrated with the message */}
-                  <div className="mt-2 ml-1">
-                    <MessageRating 
-                      messageId={m.id} 
-                      isComplete={isComplete} 
-                      onRegenerate={onRegenerate}
-                      content={m.content}
-                    />
-                  </div>
+                  {isComplete && m.role === 'assistant' && (
+                    <div className="mt-2">
+                      <MessageRating 
+                        messageId={m.id} 
+                        isComplete={isComplete} 
+                        onRegenerate={onRegenerate}
+                        content={m.content}
+                      />
+                    </div>
+                  )}
                 </div>
+
                 
                 {/* Referenced Sources */}
                 {extractSourceNumbers(m.content).length > 0 && (
