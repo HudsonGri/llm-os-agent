@@ -1,151 +1,138 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 import { Markdown } from '@/components/markdown';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import type { Components } from 'react-markdown';
 
-// Override the paragraph element so it renders as an inline <span> instead of a block <p>
-
-const inlineMarkdownComponents = {
-  pre: ({ children }) => <>{children}</>,
-  ol: ({ node, children, ...props }) => {
-    return (
-      <ol className="list-none pl-0 space-y-1 [counter-reset:item]" {...props}>
+// Move components outside of render to prevent recreation
+const inlineMarkdownComponents: Partial<Components> = {
+  pre: memo(({ children, ...props }) => (
+    <pre className="overflow-x-auto p-4 rounded-lg bg-zinc-100 my-4" {...props}>
+      {children}
+    </pre>
+  )),
+  code: memo(({ children, ...props }) => (
+    <code className="px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-sm" {...props}>
+      {children}
+    </code>
+  )),
+  ol: memo(({ children, ...props }) => (
+    <ol className="list-decimal pl-6 space-y-2 my-4" {...props}>
+      {children}
+    </ol>
+  )),
+  li: memo(({ children, ...props }) => (
+    <li className="leading-relaxed pl-2" {...props}>
+      {children}
+    </li>
+  )),
+  ul: memo(({ children, ...props }) => (
+    <ul className="list-disc pl-6 space-y-2 my-4" {...props}>
+      {children}
+    </ul>
+  )),
+  strong: memo(({ children, ...props }) => (
+    <strong className="font-semibold" {...props}>
+      {children}
+    </strong>
+  )),
+  em: memo(({ children, ...props }) => (
+    <em className="italic" {...props}>
+      {children}
+    </em>
+  )),
+  a: memo(({ children, href, ...props }) => (
+    <Link
+      className="text-blue-500 hover:underline"
+      href={href || '#'}
+      target="_blank"
+      rel="noreferrer"
+      {...props}
+    >
+      {children}
+    </Link>
+  )),
+  h1: memo(({ children, ...props }) => (
+    <h1 className="text-3xl font-semibold mt-8 mb-4" {...props}>
+      {children}
+    </h1>
+  )),
+  h2: memo(({ children, ...props }) => (
+    <h2 className="text-2xl font-semibold mt-6 mb-3" {...props}>
+      {children}
+    </h2>
+  )),
+  h3: memo(({ children, ...props }) => (
+    <h3 className="text-xl font-semibold mt-5 mb-3" {...props}>
+      {children}
+    </h3>
+  )),
+  h4: memo(({ children, ...props }) => (
+    <h4 className="text-lg font-semibold mt-4 mb-2" {...props}>
+      {children}
+    </h4>
+  )),
+  h5: memo(({ children, ...props }) => (
+    <h5 className="text-base font-semibold mt-4 mb-2" {...props}>
+      {children}
+    </h5>
+  )),
+  h6: memo(({ children, ...props }) => (
+    <h6 className="text-sm font-semibold mt-4 mb-2" {...props}>
+      {children}
+    </h6>
+  )),
+  p: memo(({ children, ...props }) => (
+    <p className="leading-relaxed mb-4 last:mb-0" {...props}>
+      {children}
+    </p>
+  )),
+  blockquote: memo(({ children, ...props }) => (
+    <blockquote className="border-l-4 border-zinc-200 pl-4 my-4 italic" {...props}>
+      {children}
+    </blockquote>
+  )),
+  hr: memo((props) => (
+    <hr className="my-6 border-zinc-200" {...props} />
+  )),
+  table: memo(({ children, ...props }) => (
+    <div className="overflow-x-auto my-4">
+      <table className="min-w-full divide-y divide-zinc-200" {...props}>
         {children}
-      </ol>
-    );
-  },
-  li: ({ node, children, ...props }) => {
-    return (
-      <li className="leading-relaxed flex gap-2 before:content-[counter(item)'.'] before:[counter-increment:item] before:font-normal before:text-muted-foreground" {...props}>
-        {children}
-      </li>
-    );
-  },
-  ul: ({ node, children, ...props }) => {
-    return (
-      <ul className="list-none pl-0 space-y-1" {...props}>
-        {children}
-      </ul>
-    );
-  },
-  strong: ({ node, children, ...props }) => {
-    return (
-      <span className="font-semibold" {...props}>
-        {children}
-      </span>
-    );
-  },
-  a: ({ node, children, ...props }) => {
-    return (
-      // @ts-expect-error
-      <Link
-        className="text-blue-500 hover:underline"
-        target="_blank"
-        rel="noreferrer"
-        {...props}
-      >
-        {children}
-      </Link>
-    );
-  },
-  h1: ({ node, children, ...props }) => {
-    return (
-      <h1 className="text-3xl font-semibold mt-6 mb-2" {...props}>
-        {children}
-      </h1>
-    );
-  },
-  h2: ({ node, children, ...props }) => {
-    return (
-      <h2 className="text-2xl font-semibold mt-6 mb-2" {...props}>
-        {children}
-      </h2>
-    );
-  },
-  h3: ({ node, children, ...props }) => {
-    return (
-      <h3 className="text-xl font-semibold mt-6 mb-2" {...props}>
-        {children}
-      </h3>
-    );
-  },
-  h4: ({ node, children, ...props }) => {
-    return (
-      <h4 className="text-lg font-semibold mt-6 mb-2" {...props}>
-        {children}
-      </h4>
-    );
-  },
-  h5: ({ node, children, ...props }) => {
-    return (
-      <h5 className="text-base font-semibold mt-6 mb-2" {...props}>
-        {children}
-      </h5>
-    );
-  },
-  h6: ({ node, children, ...props }) => {
-    return (
-      <h6 className="text-sm font-semibold mt-6 mb-2" {...props}>
-        {children}
-      </h6>
-    );
-  },
-  p: ({ node, children, ...props }) => {
-    return (
-      <span className="inline" {...props}>
-        {children}
-      </span>
-    );
-  },
-  
+      </table>
+    </div>
+  )),
+  th: memo(({ children, ...props }) => (
+    <th className="px-4 py-2 bg-zinc-50 font-semibold text-left" {...props}>
+      {children}
+    </th>
+  )),
+  td: memo(({ children, ...props }) => (
+    <td className="px-4 py-2 border-t border-zinc-100" {...props}>
+      {children}
+    </td>
+  )),
 };
 
 interface AssistantMessageProps {
   message: string;
 }
 
-export default function AssistantMessage({ message }: AssistantMessageProps) {
-  const parts = message.split(/【\{*source_(\d+)\}*】/);
+const AssistantMessage = memo(function AssistantMessage({ message }: AssistantMessageProps) {
+  // Memoize the clean message to prevent unnecessary recalculation
+  const cleanMessage = useMemo(() =>
+    message.replace(/【\{?(?:(?:source_\d+)|s(?:o(?:u(?:r(?:c(?:e)?)?)?)?))\}?】/g, ''),
+    [message]
+  );
   
   return (
-    <>
-      {parts.map((part, index) => {
-        if (index % 2 === 0) {
-          // Render non-hover parts as inline markdown.
-          return (
-            <ReactMarkdown 
-              key={index} 
-              components={inlineMarkdownComponents}
-            >
-              {part}
-            </ReactMarkdown>
-          );
-        } else {
-          // Render hover cards inline for the source markers.
-          return (
-            <HoverCard key={index} openDelay={10} closeDelay={0}>
-              <HoverCardTrigger asChild>
-                <span
-                  className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium 
-                    rounded-full bg-blue-100 text-blue-800 mx-1 cursor-pointer align-middle
-                    hover:bg-blue-200 transition-colors"
-                >
-                  {part}
-                </span>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-80">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Source {part}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  </p>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-          );
-        }
-      })}
-    </>
+    <div className="prose prose-zinc dark:prose-invert prose-sm max-w-none">
+      <ReactMarkdown components={inlineMarkdownComponents}>
+        {cleanMessage}
+      </ReactMarkdown>
+    </div>
   );
-}
+});
+
+export default AssistantMessage;

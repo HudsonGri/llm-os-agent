@@ -1,0 +1,335 @@
+
+--- Chunk 1 ---
+```html
+<p>About RAID – Who defines RAID levels?</p>
+<p>There isn't a single centralized body that manages or defines RAID levels. The concept of RAID was introduced in the late 1980s by researchers at the University of California, Berkeley, but the various RAID levels have been developed and refined over time by industry practitioners, organizations, and standards bodies.</p>
+<p>The most commonly referred to standard for RAID levels is defined by the Storage Networking Industry Association (SNIA). SNIA is a non-profit organization that works on the development and promotion of standards, technologies, and educational services in the storage industry. The RAID Advisory Board, part of SNIA, provides information and guidance on RAID technologies.</p>
+<p>Additionally, RAID levels are often influenced by industry practices, evolving technologies, and the needs of users and organizations, so the definitions and implementations may vary across different sources and contexts.</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>We will begin by exploring two protocols: the Open Systems Interconnection protocol or OSI and the Internet Protocol or IP protocol.</p>
+<p>These two protocols are at the core of the modern Internet. They have many similarities, but essentially differ on how rigid each protocol is. [CLICK]</p>
+<p>The Open Systems Interconnection protocol or OSI is an ISO standard. ISO is the International Organization for Standardization. The OSI protocol is characterized by having strict communication layers. A system that is certified to follow the OSI protocol must follow all the rules about how data is transmitted between layers and managed by the system. It is therefore a rigid protocol that makes for stable systems because they must follow strict rules. [CLICK]</p>
+<p>The Internet Protocol or IP protocol first appeared as part of the military network ARPAnet. Whereas the OSI protocol favors stability, the IP protocol favors innovation. The IP protocol is characterized by being a loosely layered model. This means that applications may choose to bypass or change how some layers communicate to accommodate for their needs. This promotes innovation since it is in essence a simpler model.</p>
+<p>Next, we will investigate each of these systems in detail.</p>
+<p>[CLICK – Next Slide]</p>
+<p>Welcome!</p>
+<p>Speaker Notes: ON SCREEN</p>
+<p>Welcome back! In this lecture, we will begin to explore the internet protocol. Let’s get started!</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 2 ---
+```html
+<p>A Tale of Two Protocols</p>
+<p>Open Systems Interconnection (OSI): The Good Child</p>
+<p>Original International Organization for Standardization (ISO) standard</p>
+<p>Based on strictly controlled layers</p>
+<p>Internet Protocol (IP):
+The Troublesome Child</p>
+<p>Created for ARPAnet (U.S. military research)</p>
+<p>Incremental implementation & model (“what works?”)</p>
+<p>Based on loosely layered model</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>We will begin by exploring two protocols: the Open Systems Interconnection protocol or OSI and the Internet Protocol or IP protocol.</p>
+<p>These two protocols are at the core of the modern Internet. They have many similarities, but essentially differ on how rigid each protocol is. [CLICK]</p>
+<p>The Open Systems Interconnection protocol or OSI is an ISO standard. ISO is the International Organization for Standardization. The OSI protocol is characterized by having strict communication layers. A system that is certified to follow the OSI protocol must follow all the rules about how data is transmitted between layers and managed by the system. It is therefore a rigid protocol that makes for stable systems because they must follow strict rules. [CLICK]</p>
+<p>The Internet Protocol or IP protocol first appeared as part of the military network ARPAnet. Whereas the OSI protocol favors stability, the IP protocol favors innovation. The IP protocol is characterized by being a loosely layered model. This means that applications may choose to bypass or change how some layers communicate to accommodate for their needs. This promotes innovation since it is in essence a simpler model.</p>
+<p>Next, we will investigate each of these systems in detail.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 3 ---
+```html
+<p>OSI Layers</p>
+<p>This Photo by Unknown Author is licensed under CC BY</p>
+<p>Speaker Notes: ON SCREEN</p>
+<p>The OSI model describes seven layers that computer systems use to communicate over a network. It was the first standard model for network communications, adopted by all major computer and telecommunication companies in the early 1980s</p>
+<p>The modern Internet is not based on OSI, but on the simpler TCP/IP model. However, the OSI 7-layer model is still widely used, as it helps visualize and communicate how networks operate, and helps isolate and troubleshoot networking problems.</p>
+<p>OSI was introduced in 1983 by representatives of the major computer and telecom companies, and was adopted by ISO as an international standard in 1984.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 4 ---
+```html
+<p>OSI Layers</p>
+<p>Physical</p>
+<p>Provides electrical connections to a transmission medium. [BITS]</p>
+<p>Data Link</p>
+<p>Packet framing. Hardware addressing. (MAC) [FRAME]</p>
+<p>One device to another (Ethernet)</p>
+<p>Network</p>
+<p>Addresses packets and routes them to provide end-to-end communication. [PACKET]</p>
+<p>One network to another (IPv4 or v6)</p>
+<p>Transport</p>
+<p>Transfers data reliably or unreliably.</p>
+<p>Reliable transfer involves a connection.</p>
+<p>One process to another (TCP/UDP)</p>
+<p>Session</p>
+<p>Opens / Closes session between applications.</p>
+<p>Presentation</p>
+<p>Formats data (e.g., compression, encryption).</p>
+<p>Application</p>
+<p>Provides the user interface.</p>
+<p>One application to another (socket port)</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Let’s exam each of the layers: [CLICK]</p>
+<p>The physical layer is responsible for the physical cable or wireless connection between network nodes. It defines the connector, the electrical cable or wireless technology connecting the devices, and is responsible for transmission of the raw data, which is simply a series of 0s and 1s, while taking care of bit rate control. [CLICK]</p>
+<p>The data link layer establishes and terminates a connection between two physically-connected nodes on a network. It breaks up packets into frames and sends them from source to destination. This layer is composed of two parts—Logical Link Control (LLC), which identifies network protocols, performs error checking and synchronizes frames, and Media Access Control (MAC) which uses MAC addresses to connect devices and define permissions to transmit and receive data. [CLICK]</p>
+<p>The network layer has two main functions. One is breaking up segments into network packets, and reassembling the packets on the receiving end. The other is routing packets by discovering the best path across a physical network. The network layer uses network addresses (typically Internet Protocol addresses) to route packets to a destination node. [CLICK]</p>
+<p>The transport layer takes data transferred in the session layer and breaks it into “segments” on the transmitting end. It is responsible for reassembling the segments on the receiving end, turning it back into data that can be used by the session layer. The transport layer carries out flow control, sending data at a rate that matches the connection speed of the receiving device, and error control, checking if data was received incorrectly and if not, requesting it again. [CLICK]</p>
+<p>The session layer creates communication channels, called sessions, between devices. It is responsible for opening sessions, ensuring they remain open and functional while data is being transferred, and closing them when communication ends. The session layer can also set checkpoints during a data transfer—if the session is interrupted, devices can resume data transfer from the last checkpoint. [CLICK]</p>
+<p>The presentation layer prepares data for the application layer. It defines how two devices should encode, encrypt, and compress data so it is received correctly on the other end. The presentation layer takes any data transmitted by the application layer and prepares it for transmission over the session layer. [CLICK]</p>
+<p>The application layer is used by end-user software such as web browsers and email clients. It provides protocols that allow software to send and receive information and present meaningful data to users. A few examples of application layer protocols are the Hypertext Transfer Protocol (HTTP), File Transfer Protocol (FTP), Post Office Protocol (POP), Simple Mail Transfer Protocol (SMTP), and Domain Name System (DNS).</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 5 ---
+```html
+<p>IP Layers</p>
+<p>Access</p>
+<p>Ethernet and electrical connections to transmission medium</p>
+<p>Network</p>
+<p>IPv4, IPv6</p>
+<p>Transport</p>
+<p>TCP, UDP</p>
+<p>Application</p>
+<p>Application Protocols:</p>
+<p>FTP, TFTP, HTTP, SMTP, POP, Game Protocol</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>The Transfer Control Protocol/Internet Protocol (TCP/IP) is older than the OSI model and was created by the US Department of Defense (DoD).</p>
+<p>A key difference between the models is that TCP/IP is simpler, collapsing several OSI layers.</p>
+<p>The TCP/IP protocol only has 4 layers: Access, Network, Transport, and Application.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 6 ---
+```html
+<p>A Tale of Two Layers</p>
+<table>
+<thead>
+<tr>
+<th>OSI Layers</th>
+<th>IP Layers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Physical</td>
+<td>Access</td>
+</tr>
+<tr>
+<td>Data Link</td>
+<td></td>
+</tr>
+<tr>
+<td>Network</td>
+<td>Network</td>
+</tr>
+<tr>
+<td>Transport</td>
+<td>Transport</td>
+</tr>
+<tr>
+<td>Session</td>
+<td></td>
+</tr>
+<tr>
+<td>Presentation</td>
+<td></td>
+</tr>
+<tr>
+<td>Application</td>
+<td>Application</td>
+</tr>
+</tbody>
+</table>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>OSI layers 5, 6, 7 are combined into one Application Layer in TCP/IP [CLICK]</p>
+<p>OSI layers 1, 2 are combined into one Network Access Layer in TCP/IP – however TCP/IP does not take responsibility for sequencing and acknowledgement functions, leaving these to the underlying transport layer.</p>
+<p>TCP/IP is a functional model designed to solve specific communication problems, and which is based on specific, standard protocols.
+OSI is a generic, protocol-independent model intended to describe all forms of network communication.
+In TCP/IP, most applications use all the layers, while in OSI simple applications do not use all seven layers. Only layers 1, 2 and 3 are mandatory to enable any data communication.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 7 ---
+```html
+<p>Networking in Modern Operating Systems</p>
+<p>The Internet Protocol</p>
+<p>Protocol Stack
+TCP / IP</p>
+<p>Access</p>
+<p>Network</p>
+<p>Network Interface</p>
+<p>Transport</p>
+<p>Network Driver</p>
+<p>Application</p>
+<p>Sockets-Based Application</p>
+<p>Sockets API</p>
+<p>Network System</p>
+<p>Assisted by the OS</p>
+<p>Handled completely by the OS</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Modern Operating Systems take care of most of the complexity related with the IP protocol. [CLICK]</p>
+<p>The Access, Network, and Transport layers are handled by the OS, [CLICK]</p>
+<p>while other features are assisted by the OS.
+Communicating over the Internet is a type of IO, and therefore is managed by the OS in kernel mode.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 8 ---
+```html
+<p>Packets and Frames</p>
+<p>The Internet Protocol</p>
+<p>IP is a packet-switching network protocol.</p>
+<p>Remember: The size of the data sent over the network is more than just your data due to the overhead of each layer!</p>
+<p>Ethernet Frame (MAC)</p>
+<p>IP Packet (Addr)</p>
+<p>TCP Packet (Ports)</p>
+<p>Protocol</p>
+<p>Application Data</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>IP is a packet switching network protocol.</p>
+<p>Packet Switching transmits data across digital networks by breaking it down into blocks or packets for more efficient transfer using various network devices.
+Each time one device sends a file to another, it breaks the file down into packets so that it can determine the most efficient route for sending the data across the network at that time.
+The network devices can then route the packets to the destination where the receiving device reassembles them for use.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 9 ---
+```html
+<p>Packets and Frames</p>
+<p>Step 1: Data Packets</p>
+<p>(101 Computing, 2021)</p>
+<p>The data is split into several packets of a small size (e.g., 64 KB max).</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>In Ip packet switching, the first step is to split the data into several packets of a small size, for example 64KB.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 10 ---
+```html
+<p>Packets and Frames</p>
+<p>Step 2: Addressing</p>
+<p>(101 Computing, 2021)</p>
+<p>Each packet contains:</p>
+<ul>
+<li>Source IP address</li>
+<li>Destination IP address</li>
+<li>Protocol: HTTP / FTP / SMTP, etc.</li>
+<li>The position of the packet</li>
+<li>The payload (the data itself!)</li>
+<li>Additional information (e.g., error detection, etc.)</li>
+</ul>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Each packet contains:</p>
+<ul>
+<li>The source IP address</li>
+<li>The destination IP address</li>
+<li>Defines the type of data being transfered: HTTP for webpages, FTP for file transfer, SMTP for email, etc.</li>
+<li>The position of the packet</li>
+<li>The payload (the data itself)</li>
+<li>Additional information such as error detection, etc.</li>
+</ul>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 11 ---
+```html
+<p>Packets and Frames</p>
+<p>Step 3: Routing</p>
+<p>(101 Computing, 2021)</p>
+<ul>
+<li>All packets are sent across the network.</li>
+<li>Packets are being redirected from one router to another until they reach their destination.</li>
+<li>Packets may follow different routes depending on network traffic.</li>
+</ul>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Next, all the packets are sent across the network. [CLICK]</p>
+<p>Packets are redirected from one router to another until they reach their destination. [CLICK]</p>
+<p>Packets may follow different routes depending on network traffic.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 12 ---
+```html
+<p>Packets and Frames</p>
+<p>Step 4: Error Detection</p>
+<p>(101 Computing, 2021)</p>
+<ul>
+<li>The receiving computer checks whether all the packets have arrived.</li>
+<li>If a packet is missing (lost packet) or has been corrupted, the receiving computer automatically asks for the sender to resend the missing packet.</li>
+</ul>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>The receiving computer checks whether all the packets have arrived. [CLICK]</p>
+<p>In TCP, if a packet is missing (lost packet) or has been corrupted, the receiving computer automatically asks for the sender to resend the missing packet.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 13 ---
+```html
+<p>Packets and Frames</p>
+<p>Step 5: Reordering</p>
+<p>(101 Computing, 2021)</p>
+<ul>
+<li>Once all packets have been received, they need to be re-ordered so that the data can be processed by the receiving computer.</li>
+</ul>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Once all packets have been received, they need to be re-ordered so that the data can be processed by the receiving computer.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 14 ---
+```html
+<p>Each IP address is unique (Internet-wide) or LAN identifier for a host or group.</p>
+<p>Internet Protocol Addressing</p>
+<p>An IPv4 Address</p>
+<p>172 . 16 . 254 . 1</p>
+<p>10101100 . 00010000 . 11111110 . 00000001</p>
+<p>One byte = 8 bits</p>
+<p>Thirty-two bits ( 4x8) or 4 bytes</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>Currently most IP addresses are using the IPv4 format, based on 4 numbers between 0 and 255 separated by a dot.</p>
+<p>The IPv4 protocol however is currently being upgraded to the IP version 6 (IPv6) internet protocol.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 15 ---
+```html
+<p>Each IP address is unique (Internet-wide) or LAN identifier for a host or group.</p>
+<p>Internet Protocol Addressing</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>The reason for this upgrade is that there is need to generate more IP addresses to allow more devices (webservers, desktops, laptops, smartphones, smartwatches and other connected objects) to have a unique IP address on the network. [CLICK]</p>
+<p>An IPv6 address is based on 128 bits (instead of 32 bits for an IPv4 address). [CLICK]</p>
+<p>The IPV4 protocol is able to address 4 billion individual devices while IPV6 340 trillion, trillion, trillion.</p>
+<p>This is large enough to give each square inch in the world an IPV6 address. It should last for quite some time.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 16 ---
+```html
+<p>The Internet Protocol</p>
+<p>Delivery Mechanisms</p>
+<p>Unicast</p>
+<p>Multicast</p>
+<p>Broadcast (v4)</p>
+<p>Single Destination</p>
+<p>Group Destination</p>
+<p>All Network Hosts</p>
+<p>Speaker Notes: OFF SCREEN</p>
+<p>There are three general types of communication in TCP/IP: Unicast, Multicast, and Broadcast. [CLICK]</p>
+<p>A Unicast communication is from one device on the network to another device on the network.
+This type of information transfer is useful when there is a participation of a single sender and a single recipient. So, in short, it is a one-to-one transmission. For example, if a device in a network wants to send the traffic stream(data packets) to another device in another network, then unicast comes into the picture. This is the most common form of data transfer over the networks. [CLICK]</p>
+<p>A MultiCast communication is from one device on the network to many, but not all, devices on the network.
+In multicasting, one/more senders and one/more recipients participate in data transfer traffic. Multicast lets servers direct single copies of data streams to hosts that request it. IP multicast requires the support of some other protocols like Multicast routing for it to work. [CLICK]
+A Broadcast communication is from one device on the network to all devices on the network.
+This is useful when a device in one network wants to transfer packet stream to all the devices over the other network.</p>
+<p>[CLICK – Next Slide]</p>
+```
+
+--- Chunk 17 ---
+```html
+<p>Thank You For Watching</p>
+<p>References</p>
+<p>101 Computing. (2021). Image of TCP/IP Protocols and Packet Switching [Online Image]. 101 Computing. https://www.101computing.net/tcpip-protocols-and-packet-switching/</p>
+```

@@ -8,6 +8,20 @@
       "when": 1719997972944,
       "tag": "0000_yielding_bloodaxe",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1739211604574,
+      "tag": "0001_productive_revanche",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1739385410478,
+      "tag": "0002_strange_sabra",
+      "breakpoints": true
     }
   ]
 }
