@@ -83,6 +83,9 @@ export async function POST(req: Request) {
 
   // Return streaming response with conversation ID
   return result.toDataStreamResponse({ 
-    headers: { 'x-conversation-id': conversationId }
+    headers: { 
+      'x-conversation-id': conversationId,
+      'Set-Cookie': `conversationId=${conversationId}; Path=/; SameSite=Strict`
+    }
   });
 }

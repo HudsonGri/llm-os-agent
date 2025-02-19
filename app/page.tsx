@@ -32,6 +32,14 @@ function isSourceResult(result: any): result is Array<{
 
 export default function Chat() {
   const [conversationId, setConversationId] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!conversationId && typeof document !== 'undefined') {
+      const match = document.cookie.match(new RegExp('(^| )conversationId=([^;]+)'));
+      if (match) {
+        setConversationId(match[2]);
+      }
+    }
+  }, [conversationId]);
   
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, reload } = useChat({
     maxSteps: 3,
