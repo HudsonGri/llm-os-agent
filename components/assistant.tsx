@@ -123,16 +123,31 @@ const processSourceNumbers = (text: string): ReactNode[] => {
   
   return parts;
 };
-
 /**
  * Creates a memoized markdown component that handles source citations.
  */
 const createMarkdownComponent = <T extends keyof JSX.IntrinsicElements>(Component: T) => 
   memo(({ children, ...props }: MarkdownComponentProps<T>) => {
-    if (typeof children === 'string') {
-      return React.createElement(Component, props, processSourceNumbers(children));
-    }
-    return React.createElement(Component, props, children);
+    const processChild = (child: ReactNode): ReactNode => {
+      if (typeof child === 'string') return processSourceNumbers(child);
+      if (!child) return child;
+      
+      if (React.isValidElement(child)) {
+        return React.cloneElement(
+          child,
+          child.props,
+          child.props.children && React.Children.map(child.props.children, processChild)
+        );
+      }
+      
+      return Array.isArray(child) ? child.map(processChild) : child;
+    };
+
+    return React.createElement(
+      Component, 
+      props,
+      React.Children.map(children, processChild)
+    );
   });
 
 // Markdown component configuration

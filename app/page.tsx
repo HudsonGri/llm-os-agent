@@ -70,8 +70,6 @@ export default function Chat() {
       conversationId,
     },
   });
-
-  console.log("Loading on start:", messages);
   
   // Track active sources in the sidebar
   const [activeSources, setActiveSources] = React.useState<Array<{

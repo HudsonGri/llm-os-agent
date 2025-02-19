@@ -21,9 +21,6 @@ export async function GET(request: Request) {
       toolInvocations: msg.toolInvocations || [],
     }));
 
-
-    console.log('Formatted messages:', formattedMessages[formattedMessages.length - 1].toolInvocations);
-
     return NextResponse.json(formattedMessages);
   } catch (error) {
     console.error('Error fetching chat history:', error);
