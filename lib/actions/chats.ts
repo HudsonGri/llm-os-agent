@@ -1,43 +1,91 @@
 'use server'
+
 import { db } from '@/lib/db';
 import { chats, type Chat, type NewChat } from '@/lib/db/schema/chats';
-import { eq, and } from 'drizzle-orm';
+import { eq, desc, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { cookies } from 'next/headers';
 import { Message } from 'ai';
 
-// Function to get or create a user ID
-export async function getUserId() {
-  const cookieStore = cookies();
-  let userId = cookieStore.get('userId')?.value;
-  
-  if (!userId) {
-    userId = createId();
-    cookieStore.set('userId', userId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365 // 1 year
-    });
-  }
-  
-  return userId;
+// Types
+type MessageRole = 'user' | 'assistant' | 'system' | 'data';
+
+interface ToolInvocation {
+  state: string;
+  toolName: string;
+  result?: any;
+  parts?: Array<{
+    toolInvocation: any;
+  }>;
 }
 
-// Function to create a new conversation
-export async function createConversation() {
+interface SaveMessageParams {
+  id: string;
+  role: MessageRole;
+  content: string;
+  conversationId: string;
+  parentMessageId?: string;
+  toolInvocations?: ToolInvocation[];
+  userAgent?: string;
+  userIp?: string;
+  tokenCount?: number;
+  processingTime?: number;
+  messages?: Message[];
+}
+
+// Constants
+const COOKIE_NAME = 'userId';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+
+// Helper Functions
+const createCookie = (userId: string) => {
+  cookies().set(COOKIE_NAME, userId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: COOKIE_MAX_AGE
+  });
+};
+
+// Main Functions
+export async function getUserId(): Promise<string> {
+  const cookieStore = cookies();
+  const userId = cookieStore.get(COOKIE_NAME)?.value;
+  
+  if (userId) return userId;
+  
+  const newUserId = createId();
+  createCookie(newUserId);
+  return newUserId;
+}
+
+export async function createConversation(): Promise<string> {
   return createId();
 }
 
-// Enhanced function to save chat messages
-export async function createChatMessage(data: Omit<NewChat, 'createdAt' | 'updatedAt'>) {
-  const [chat] = await db.insert(chats).values({
-    ...data,
-  }).returning();
-  return chat;
+export async function createChatMessage(data: NewChat): Promise<Chat> {
+  try {
+    const [chat] = await db.insert(chats)
+      .values({
+        conversationId: data.conversationId,
+        role: data.role,
+        content: data.content,
+        userId: data.userId,
+        userIp: data.userIp || '',
+        userAgent: data.userAgent || '',
+        parentMessageId: data.parentMessageId,
+        toolInvocations: data.toolInvocations,
+        tokenCount: data.tokenCount,
+        processingTime: data.processingTime
+      })
+      .returning();
+    return chat;
+  } catch (error) {
+    console.error('Error creating chat message:', error);
+    throw new Error('Failed to create chat message');
+  }
 }
 
-// Function to save a message with all metadata
 export async function saveMessage({
   id,
   role,
@@ -48,86 +96,143 @@ export async function saveMessage({
   userAgent,
   userIp,
   tokenCount,
-  processingTime
-}: {
-  id: string;
-  role: 'user' | 'assistant' | 'system' | 'data';
-  content: string;
-  conversationId: string;
-  parentMessageId?: string;
-  toolInvocations?: any;
-  userAgent?: string;
-  userIp?: string;
-  tokenCount?: number;
-  processingTime?: number;
-}) {
-  const userId = await getUserId();
-  
-  return await createChatMessage({
-    id,
-    userId,
-    userIp: userIp || '',
-    userAgent: userAgent || '',
-    role,
-    content,
-    conversationId,
-    parentMessageId,
-    toolInvocations,
-    tokenCount,
-    processingTime
-  });
+  processingTime,
+  messages,
+}: SaveMessageParams): Promise<Chat> {
+  try {
+    const userId = await getUserId();
+
+    if (role === 'assistant') {
+      // Retrieve previous assistant message
+      const [prevAssistantMessage] = await db
+        .select()
+        .from(chats)
+        .where(eq(chats.conversationId, conversationId))
+        .orderBy(desc(chats.createdAt))
+        .limit(1);
+
+      if (prevAssistantMessage?.toolInvocations && prevAssistantMessage.role === 'assistant') {
+        const lastAssistantMessage = messages?.findLast((m: Message) => m.role === 'assistant');
+        
+        if (!lastAssistantMessage?.parts) {
+          throw new Error('Invalid assistant message format');
+        }
+
+        const [updatedChat] = await db
+          .update(chats)
+          .set({
+            content,
+            tokenCount: (prevAssistantMessage.tokenCount || 0) + (tokenCount || 0),
+            processingTime: (prevAssistantMessage.processingTime || 0) + (processingTime || 0),
+            toolInvocations: lastAssistantMessage.parts.map((invocation: { toolInvocation: any }) => ({
+              ...invocation.toolInvocation,
+            })),
+          })
+          .where(eq(chats.id, prevAssistantMessage.id))
+          .returning();
+        return updatedChat;
+      }
+    }
+
+    return await createChatMessage({
+      id,
+      userId,
+      userIp: userIp || '',
+      userAgent: userAgent || '',
+      role,
+      content,
+      conversationId,
+      parentMessageId,
+      toolInvocations,
+      tokenCount,
+      processingTime
+    });
+  } catch (error) {
+    console.error('Error saving message:', error);
+    throw new Error('Failed to save message');
+  }
 }
 
-export async function getConversationMessages(conversationId: string) {
-  return await db
-    .select()
-    .from(chats)
-    .where(eq(chats.conversationId, conversationId))
-    .orderBy(chats.createdAt);
+export async function getConversationMessages(conversationId: string): Promise<Chat[]> {
+  try {
+    return await db
+      .select()
+      .from(chats)
+      .where(eq(chats.conversationId, conversationId))
+      .orderBy(asc(chats.createdAt));
+  } catch (error) {
+    console.error('Error fetching conversation messages:', error);
+    throw new Error('Failed to fetch conversation messages');
+  }
 }
 
-export async function getMessageById(messageId: string) {
-  const [chat] = await db
-    .select()
-    .from(chats)
-    .where(eq(chats.id, messageId));
-  return chat;
+export async function getMessageById(messageId: string): Promise<Chat | null> {
+  try {
+    const [chat] = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.id, messageId));
+    return chat || null;
+  } catch (error) {
+    console.error('Error fetching message:', error);
+    throw new Error('Failed to fetch message');
+  }
 }
 
-export async function updateChatRating(messageId: string, rating: 'up' | 'down' | null) {
-  console.log('Updating chat rating for messageId:', messageId, 'with rating:', rating);
-  const [chat] = await db
-    .update(chats)
-    .set({ 
-      rating,
-      ratedAt: rating ? new Date() : null
-    })
-    .where(eq(chats.id, messageId))
-    .returning();
-  console.log('Updated chat rating:', chat);
-  return chat;
+export async function updateChatRating(messageId: string, rating: 'up' | 'down' | null): Promise<Chat> {
+  try {
+    const [chat] = await db
+      .update(chats)
+      .set({ 
+        rating,
+        ratedAt: rating ? new Date() : null
+      })
+      .where(eq(chats.id, messageId))
+      .returning();
+    return chat;
+  } catch (error) {
+    console.error('Error updating chat rating:', error);
+    throw new Error('Failed to update chat rating');
+  }
 }
 
-export async function getConversationStats(conversationId: string) {
-  const messages = await db
-    .select({
-      role: chats.role,
-      tokenCount: chats.tokenCount,
-      processingTime: chats.processingTime,
-      rating: chats.rating,
-    })
-    .from(chats)
-    .where(eq(chats.conversationId, conversationId));
-
-  return {
-    messageCount: messages.length,
-    assistantMessages: messages.filter(m => m.role === 'assistant').length,
-    userMessages: messages.filter(m => m.role === 'user').length,
-    totalTokens: messages.reduce((sum, m) => sum + (m.tokenCount || 0), 0),
-    totalProcessingTime: messages.reduce((sum, m) => sum + (m.processingTime || 0), 0),
-    ratings: {
-      up: messages.filter(m => m.rating === 'up').length,
-      down: messages.filter(m => m.rating === 'down').length,
-    },
+interface ConversationStats {
+  messageCount: number;
+  assistantMessages: number;
+  userMessages: number;
+  totalTokens: number;
+  totalProcessingTime: number;
+  ratings: {
+    up: number;
+    down: number;
   };
+}
+
+export async function getConversationStats(conversationId: string): Promise<ConversationStats> {
+  try {
+    const messages = await db
+      .select({
+        role: chats.role,
+        tokenCount: chats.tokenCount,
+        processingTime: chats.processingTime,
+        rating: chats.rating,
+      })
+      .from(chats)
+      .where(eq(chats.conversationId, conversationId));
+
+    return {
+      messageCount: messages.length,
+      assistantMessages: messages.filter(m => m.role === 'assistant').length,
+      userMessages: messages.filter(m => m.role === 'user').length,
+      totalTokens: messages.reduce((sum, m) => sum + (m.tokenCount || 0), 0),
+      totalProcessingTime: messages.reduce((sum, m) => sum + (m.processingTime || 0), 0),
+      ratings: {
+        up: messages.filter(m => m.rating === 'up').length,
+        down: messages.filter(m => m.rating === 'down').length,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching conversation stats:', error);
+    throw new Error('Failed to fetch conversation stats');
+  }
 } 

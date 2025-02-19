@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       conversationId,
       userIp,
       userAgent,
+      messages: messages
     });
   }
 
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
     system: `You are a helpful assistant specialized in answering questions about the course content.
     Always check your course slide knowledge base before answering. 
     Only respond with information from tool calls; if no relevant information is found, respond with "Sorry, I don't know."
-    If you use a specific course slide content, mention it by stating 【source_NUMBER】 at the very end of your response (e.g. 【source_1】) You can only cite a single source once, so if you cite a source, don't cite it again in the same response.`,
+    If you use a specific course slide content, mention it by stating 【source_NUMBER】 at the very end of your response (e.g. 【source_1】) You can only cite a single source once, so if you cite a source, don't cite it again in the same response. If you have no sources to reference, don't mention any source tags.`,
     messages,
     tools: {
       getInformation: tool({
@@ -62,6 +63,8 @@ export async function POST(req: Request) {
       if (isCompleted) return;
       isCompleted = true;
 
+      console.log("Saving messages:", completion.response.messages);
+
       try {
         await saveMessage({
           id: completion.response.messages?.[0]?.id,
@@ -74,6 +77,7 @@ export async function POST(req: Request) {
           userAgent,
           processingTime: Date.now() - startTime,
           tokenCount: completion.usage?.completionTokens,
+          messages: messages
         });
       } catch (error) {
         console.error('Error saving assistant message:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useChat } from 'ai/react';
+import { useChat, Message } from 'ai/react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from "lucide-react";
@@ -32,22 +32,46 @@ function isSourceResult(result: any): result is Array<{
 
 export default function Chat() {
   const [conversationId, setConversationId] = React.useState<string | null>(null);
+  const [initialMessages, setInitialMessages] = React.useState<Message[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+
+  // Load conversation history when conversationId is set
   React.useEffect(() => {
-    if (!conversationId && typeof document !== 'undefined') {
+    if (!conversationId) {
       const match = document.cookie.match(new RegExp('(^| )conversationId=([^;]+)'));
       if (match) {
         setConversationId(match[2]);
       }
+      return;
     }
+
+    async function loadConversationHistory() {
+      setIsLoadingHistory(true);
+      try {
+        const response = await fetch(`/api/chat/history?conversationId=${conversationId}`);
+        if (!response.ok) throw new Error('Failed to load chat history');
+        const history = await response.json();
+        setInitialMessages(history);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
+
+    loadConversationHistory();
   }, [conversationId]);
   
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, reload } = useChat({
     maxSteps: 3,
     id: conversationId || undefined,
+    initialMessages,
     body: {
       conversationId,
     },
   });
+
+  console.log("Loading on start:", messages);
   
   // Track active sources in the sidebar
   const [activeSources, setActiveSources] = React.useState<Array<{
@@ -63,35 +87,44 @@ export default function Chat() {
   // Add sidebar view state
   const [sidebarView, setSidebarView] = React.useState<'sources' | 'dev'>('sources');
 
+  // Add a ref to track the last processed assistant message
+  const lastAssistantMessageIdRef = React.useRef<string | null>(null);
+
   // Optimize source management with useCallback and useMemo
   const updateActiveSources = useCallback((message: Message) => {
     if (message?.role === 'assistant') {
       const sourceNumbers = extractSourceNumbers(message.content);
-      const sourceInfo = message.toolInvocations
-        ?.find(t => t.toolName === 'getInformation')
-        ?.result;
+      const toolInvocation = message.toolInvocations?.find(t => 
+        t.state === 'result' && 
+        'toolName' in t && 
+        t.toolName === 'getInformation'
+      );
       
-      if (sourceInfo && isSourceResult(sourceInfo) && sourceNumbers.length > 0) {
-        const newSources = sourceNumbers.map(num => ({
-          sourceNum: num,
-          source: sourceInfo[num - 1],
-          addedAt: new Date().getTime()
-        }));
-        
-        setActiveSources(prev => {
-          const sourceMap = new Map(prev.map(item => [item.sourceNum, item]));
-          newSources.forEach(item => sourceMap.set(item.sourceNum, item));
-          return Array.from(sourceMap.values());
-        });
+      if (toolInvocation?.state === 'result' && sourceNumbers.length > 0) {
+        const sourceInfo = toolInvocation.result;
+        if (Array.isArray(sourceInfo)) {
+          const newSources = sourceNumbers.map(num => ({
+            sourceNum: num,
+            source: sourceInfo[num - 1],
+            addedAt: new Date().getTime()
+          }));
+          
+          setActiveSources(prev => {
+            const sourceMap = new Map(prev.map(item => [item.sourceNum, item]));
+            newSources.forEach(item => sourceMap.set(item.sourceNum, item));
+            return Array.from(sourceMap.values());
+          });
+        }
       }
     }
   }, []);
 
-  // Update sources only when messages change
+  // Update sources only when messages change, now with guard to prevent infinite update loop
   useEffect(() => {
     const latestMessage = messages[messages.length - 1];
-    if (latestMessage) {
+    if (latestMessage && latestMessage.role === 'assistant' && latestMessage.id !== lastAssistantMessageIdRef.current) {
       updateActiveSources(latestMessage);
+      lastAssistantMessageIdRef.current = latestMessage.id;
     }
   }, [messages, updateActiveSources]);
 
@@ -177,26 +210,4 @@ export default function Chat() {
       />
     </div>
   );
-}
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system' | 'data';
-  content: string;
-  toolInvocations?: Array<{
-    toolName: string;
-    result?: {
-      topic?: string;
-      similarity?: number;
-      name?: string;
-      filename?: string;
-      url?: string;
-    } | Array<{
-      topic?: string;
-      similarity: number;
-      name: string;
-      filename?: string;
-      url?: string;
-    }>;
-  }>;
 }
