@@ -57,7 +57,7 @@ export function ChatInput({
               onChange={(e) => handleInputChange(e as any)}
               onKeyDown={handleKeyDown}
               rows={1}
-              className="pl-4 pr-12 py-3 w-full text-sm text-zinc-900 bg-zinc-100 rounded-2xl border-0 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-600/20 focus-visible:ring-offset-1 resize-none overflow-y-auto"
+              className="pl-4 pr-12 py-3 w-full text-sm text-zinc-900 bg-zinc-100 rounded-2xl border-0 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-600/20 resize-none overflow-y-auto transition-all duration-300"
               style={{ minHeight: '44px', maxHeight: '200px' }}
             />
             <Button 

@@ -73,9 +73,19 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                     >
                       <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
                       <span className="text-sm text-zinc-500">Generating response...</span>
-                    </div>
+                    </div> 
                   ) : (
-                    <AssistantMessage message={m.content} />
+                    <div>
+                      <AssistantMessage 
+                        message={{
+                          content: m.content,
+                          toolInvocations: m.toolInvocations?.map(t => ({
+                            toolName: t.toolName,
+                            result: t.result
+                          }))
+                        }} 
+                      />
+                    </div>
                   )}
                   
                   {/* Rating buttons integrated with the message */}
@@ -143,7 +153,7 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                                           </div>
                                           <div className="text-xs text-zinc-500 flex items-center gap-1.5 mt-0.5">
                                             <span className="inline-block w-1 h-1 rounded-full bg-zinc-400" />
-                                            Click to view source
+                                            Click to visit source
                                           </div>
                                         </div>
                                       </div>

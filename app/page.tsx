@@ -36,20 +36,6 @@ export default function Chat() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, reload } = useChat({
     maxSteps: 3,
     id: conversationId || undefined,
-
-    // This is messing with the request causing a jitter to appear in the UI
-    // TODO: Fix this, without it it wont save in db correctly
-
-    // onResponse: (response) => {
-    //   // Get conversation ID from response headers
-    //   const newConversationId = response.headers.get('x-conversation-id');
-    //   if (newConversationId && !conversationId) {
-    //     setConversationId(newConversationId);
-    //   }
-    // },
-    onFinish: (message) => {
-        setCompletedMessages(prev => new Set([...prev, message.id]));
-    },
     body: {
       conversationId,
     },
@@ -68,25 +54,6 @@ export default function Chat() {
   const [searchFilter, setSearchFilter] = React.useState('');
   // Add sidebar view state
   const [sidebarView, setSidebarView] = React.useState<'sources' | 'dev'>('sources');
-
-  // Track message completion state
-  const [completedMessages, setCompletedMessages] = React.useState<Set<string>>(new Set());
-
-  // Create a wrapper for handleSubmit to show loading immediately
-  const handleSubmitWithLoading = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    
-    // Add loading message immediately
-    const loadingMessage = {
-      id: 'loading',
-      role: 'assistant' as const,
-      content: '',
-    };
-    
-    // Call the original handleSubmit
-    await handleSubmit(e);
-  };
 
   // Optimize source management with useCallback and useMemo
   const updateActiveSources = useCallback((message: Message) => {
@@ -120,16 +87,6 @@ export default function Chat() {
     }
   }, [messages, updateActiveSources]);
 
-  // Update completed messages when a message is no longer loading
-  React.useEffect(() => {
-    if (!isLoading && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'user') {
-        setCompletedMessages(prev => new Set([...prev, lastMessage.id]));
-      }
-    }
-  }, [isLoading, messages]);
-
   // Memoize filtered and sorted sources
   const filteredAndSortedSources = useMemo(() => {
     let sources = [...activeSources];
@@ -155,17 +112,21 @@ export default function Chat() {
       <div className="flex-1 flex flex-col min-w-0">
         <ScrollArea className="flex-1">
           <div className="max-w-5xl mx-auto py-6 px-4">
-            {messages.map((m) => (
-              <ChatMessage
-                key={m.id}
-                message={m}
-                isTopicResult={isTopicResult}
-                extractSourceNumbers={extractSourceNumbers}
-                TopicBadge={TopicBadge}
-                onRegenerate={m.role === 'assistant' ? () => reload() : undefined}
-                isComplete={m.role === 'user' || completedMessages.has(m.id)}
-              />
-            ))}
+            {messages.map((m, index) => {
+              const isLastMessage = index === messages.length - 1;
+              const isComplete = m.role === 'user' || (!isLastMessage || !isLoading);
+              return (
+                <ChatMessage
+                  key={m.id}
+                  message={m}
+                  isTopicResult={isTopicResult}
+                  extractSourceNumbers={extractSourceNumbers}
+                  TopicBadge={TopicBadge}
+                  onRegenerate={m.role === 'assistant' ? () => reload() : undefined}
+                  isComplete={isComplete}
+                />
+              );
+            })}
             {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <ChatMessage
                 key="loading"
@@ -187,7 +148,7 @@ export default function Chat() {
           <ChatInput
             input={input}
             handleInputChange={handleInputChange}
-            handleSubmit={handleSubmitWithLoading}
+            handleSubmit={handleSubmit}
             isLoading={isLoading}
             stop={stop}
           />
