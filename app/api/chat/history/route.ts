@@ -1,6 +1,6 @@
+// app/api/chat/history/route.ts
 import { NextResponse } from 'next/server';
 import { getConversationMessages } from '@/lib/actions/chats';
-import { nanoid } from '@/lib/utils';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

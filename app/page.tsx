@@ -2,32 +2,30 @@
 
 import { useChat, Message } from 'ai/react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { ChevronDown } from "lucide-react";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { ChatMessage } from '@/components/chat/chat-message';
 import { ChatInput } from '@/components/chat/chat-input';
-import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { TopicBadge } from '@/components/chat/topic-badge';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ChatHistory } from '@/components/chat/chat-history';
+import { PlusCircle, SquarePen } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
+// Helper function for message parsing
 function extractSourceNumbers(content: string): number[] {
   const matches = content.matchAll(/【\{*source_(\d+)\}*】/g);
   const numbers = [...matches].map(match => parseInt(match[1]));
   return [...new Set(numbers)]; // Remove duplicates
 }
 
-// Type guard functions
 function isTopicResult(result: any): result is { topic: string } {
   return result && typeof result.topic === 'string';
-}
-
-function isSourceResult(result: any): result is Array<{
-  similarity: number;
-  name: string;
-  filename?: string;
-  url?: string;
-}> {
-  return Array.isArray(result) && result.length > 0 && typeof result[0].similarity === 'number';
 }
 
 export default function Chat() {
@@ -35,15 +33,50 @@ export default function Chat() {
   const [initialMessages, setInitialMessages] = React.useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
 
-  // Load conversation history when conversationId is set
-  React.useEffect(() => {
-    if (!conversationId) {
+  // Load most recent chat or existing chat from cookie
+  useEffect(() => {
+    async function initializeChat() {
+      // First check cookie for existing conversation
       const match = document.cookie.match(new RegExp('(^| )conversationId=([^;]+)'));
-      if (match) {
+      if (match && !conversationId) {
         setConversationId(match[2]);
+        return;
       }
-      return;
+
+      // If no conversation in cookie, fetch most recent conversation
+      if (!conversationId) {
+        try {
+          const response = await fetch('/api/chat/conversations');
+          if (!response.ok) throw new Error('Failed to load conversations');
+          const conversations = await response.json();
+          
+          if (conversations.length > 0) {
+            // Set the most recent conversation
+            const mostRecentId = conversations[0].id;
+            document.cookie = `conversationId=${mostRecentId}; Path=/`;
+            setConversationId(mostRecentId);
+          } else {
+            // No existing conversations, create new one
+            const newId = crypto.randomUUID();
+            document.cookie = `conversationId=${newId}; Path=/`;
+            setConversationId(newId);
+          }
+        } catch (error) {
+          console.error('Error loading most recent chat:', error);
+          // Fallback to new conversation
+          const newId = crypto.randomUUID();
+          document.cookie = `conversationId=${newId}; Path=/`;
+          setConversationId(newId);
+        }
+      }
     }
+
+    initializeChat();
+  }, []); // Only run on initial mount
+
+  // Load conversation history when conversationId changes
+  useEffect(() => {
+    if (!conversationId) return;
 
     async function loadConversationHistory() {
       setIsLoadingHistory(true);
@@ -61,94 +94,51 @@ export default function Chat() {
 
     loadConversationHistory();
   }, [conversationId]);
-  
+
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, reload } = useChat({
     maxSteps: 3,
-    id: conversationId || undefined,
+    id: conversationId as string,
     initialMessages,
     body: {
       conversationId,
     },
   });
-  
-  // Track active sources in the sidebar
-  const [activeSources, setActiveSources] = React.useState<Array<{
-    sourceNum: number;
-    source: any;
-    addedAt: number;
-  }>>([]);
 
-  // Add sorting state
-  const [sortBy, setSortBy] = React.useState<'recent' | 'similarity'>('recent');
-  // Add filter state
-  const [searchFilter, setSearchFilter] = React.useState('');
-  // Add sidebar view state
-  const [sidebarView, setSidebarView] = React.useState<'sources' | 'dev'>('sources');
-
-  // Add a ref to track the last processed assistant message
-  const lastAssistantMessageIdRef = React.useRef<string | null>(null);
-
-  // Optimize source management with useCallback and useMemo
-  const updateActiveSources = useCallback((message: Message) => {
-    if (message?.role === 'assistant') {
-      const sourceNumbers = extractSourceNumbers(message.content);
-      const toolInvocation = message.toolInvocations?.find(t => 
-        t.state === 'result' && 
-        'toolName' in t && 
-        t.toolName === 'getInformation'
-      );
-      
-      if (toolInvocation?.state === 'result' && sourceNumbers.length > 0) {
-        const sourceInfo = toolInvocation.result;
-        if (Array.isArray(sourceInfo)) {
-          const newSources = sourceNumbers.map(num => ({
-            sourceNum: num,
-            source: sourceInfo[num - 1],
-            addedAt: new Date().getTime()
-          }));
-          
-          setActiveSources(prev => {
-            const sourceMap = new Map(prev.map(item => [item.sourceNum, item]));
-            newSources.forEach(item => sourceMap.set(item.sourceNum, item));
-            return Array.from(sourceMap.values());
-          });
-        }
-      }
-    }
-  }, []);
-
-  // Update sources only when messages change, now with guard to prevent infinite update loop
-  useEffect(() => {
-    const latestMessage = messages[messages.length - 1];
-    if (latestMessage && latestMessage.role === 'assistant' && latestMessage.id !== lastAssistantMessageIdRef.current) {
-      updateActiveSources(latestMessage);
-      lastAssistantMessageIdRef.current = latestMessage.id;
-    }
-  }, [messages, updateActiveSources]);
-
-  // Memoize filtered and sorted sources
-  const filteredAndSortedSources = useMemo(() => {
-    let sources = [...activeSources];
-    
-    if (searchFilter) {
-      const filter = searchFilter.toLowerCase();
-      sources = sources.filter(({ source }) => 
-        (source?.filename?.toLowerCase() || '').includes(filter) ||
-        (source?.name?.toLowerCase() || '').includes(filter)
-      );
-    }
-    
-    return sources.sort((a, b) => 
-      sortBy === 'similarity' 
-        ? (b.source?.similarity || 0) - (a.source?.similarity || 0)
-        : (b.addedAt || 0) - (a.addedAt || 0)
-    );
-  }, [activeSources, sortBy, searchFilter]);
+  const handleNewChat = () => {
+    // Generate new ID for the new chat
+    const newId = crypto.randomUUID();
+    document.cookie = `conversationId=${newId}; Path=/`;
+    setConversationId(newId);
+    setInitialMessages([]);
+  };
 
   return (
     <div className="flex w-full h-screen bg-zinc-50">
-      {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
+        <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleNewChat}
+                >
+                  <SquarePen className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>New Chat</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <ChatHistory
+            currentConversationId={conversationId}
+            onSelectConversation={setConversationId}
+            onNewChat={handleNewChat}
+          />
+        </div>
         <ScrollArea className="flex-1">
           <div className="max-w-5xl mx-auto py-6 px-4">
             {messages.map((m, index) => {
@@ -180,6 +170,7 @@ export default function Chat() {
                 isComplete={false}
               />
             )}
+
           </div>
         </ScrollArea>
 
@@ -193,19 +184,6 @@ export default function Chat() {
           />
         </div>
       </div>
-
-      {/* Sidebar */}
-      <ChatSidebar
-        sidebarView={sidebarView}
-        setSidebarView={setSidebarView}
-        searchFilter={searchFilter}
-        setSearchFilter={setSearchFilter}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        activeSources={activeSources}
-        filteredAndSortedSources={filteredAndSortedSources}
-        messages={messages}
-      />
     </div>
   );
 }
