@@ -4,6 +4,7 @@ import sys
 import re
 import uuid
 import json
+import io
 import google.generativeai as genai
 from openai import OpenAI
 import psycopg2
@@ -11,12 +12,21 @@ from psycopg2.extras import execute_values
 from PyPDF2 import PdfReader
 from pptx import Presentation
 from dotenv import load_dotenv
+from canvasapi import Canvas
 import argparse
 
 # --- Configuration ---
 
 # Load environment variables from .env file
 load_dotenv()
+
+API_URL = "https://ufl.instructure.com/"
+
+# Canvas API key
+API_KEY = os.getenv("CANVAS_API_KEY")
+
+# Initialize a new Canvas object
+canvas = Canvas(API_URL, API_KEY)
 
 # Set your OpenAI API key and database URL via environment variables.
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -39,6 +49,12 @@ CHUNKING_PROMPT = (
     "be embedded and used in a RAG pipeline. \n\n"
     "Surround the chunks with <chunk> </chunk> html tags."
 )
+
+
+def file_from_bytes(file):
+    bytes = file.get_contents(binary=True)
+    return io.BytesIO(bytes)
+
 
 # --- PDF Extraction ---
 
@@ -96,13 +112,11 @@ def chunk_text_with_gemini(text: str) -> list:
 
     except Exception as e:
         print(f"Error calling Gemini API: {e}")
-        sys.exit(1)
     
     # Extract chunks enclosed in <chunk>...</chunk> tags using regex.
     chunks = re.findall(r"<chunk>(.*?)</chunk>", chunked_text, re.DOTALL)
     if not chunks:
         print("No chunks found in the Gemini response. Check the API output.")
-        sys.exit(1)
 
     # Save extracted chunks to file for debugging
     with open("extracted_chunks.txt", "w") as f:
@@ -126,7 +140,6 @@ def generate_embedding(text: str) -> list:
         return response.data[0].embedding
     except Exception as e:
         print(f"Error generating embedding: {e}")
-        sys.exit(1)
 
 # --- Database Insertion ---
 
@@ -166,7 +179,6 @@ def store_resource_and_embeddings(full_text: str, chunks: list, embeddings: list
         print("Resource and embeddings successfully stored.")
     except Exception as e:
         print(f"Database error: {e}")
-        sys.exit(1)
     finally:
         if conn:
             cur.close()
@@ -175,38 +187,89 @@ def store_resource_and_embeddings(full_text: str, chunks: list, embeddings: list
 # --- Main Ingestion Pipeline ---
 
 def main():
-    parser = argparse.ArgumentParser(description='Ingest a file into the knowledge base.')
-    parser.add_argument('file_path', help='Path to the file to ingest')
-    parser.add_argument('--url', help='URL associated with the file')
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description='Ingest a file into the knowledge base.')
+    # parser.add_argument('file_path', help='Path to the file to ingest')
+    # parser.add_argument('--url', help='URL associated with the file')
+    # args = parser.parse_args()
 
-    file_path = args.file_path
-    filename = os.path.basename(file_path)
-    url = args.url
+    # file_path = args.file_path
+    # filename = os.path.basename(file_path)
+    # url = args.url
 
-    print(f"Extracting text from {file_path} ...")
-    _, ext = os.path.splitext(file_path)
-    ext = ext.lower()
-    if ext == ".pdf":
-        full_text = extract_text_from_pdf(file_path)
-    elif ext == ".pptx":
-        full_text = extract_text_from_pptx(file_path)
-    else:
-        print("Unsupported file type. Please provide a PDF or PPTX file.")
-        sys.exit(1)
+    # Get course by course number
+    course = canvas.get_course(525691)
+
+    files = course.get_files()
+
+    not_reached = True
+
+    # iterate through files in Canvas course
+    for file in files:
+
+        filename = str(file)
+        url = file.url.split('/download?download_frd')[0]
+        _, ext = os.path.splitext(filename)
+        full_text = ''
+
+        if filename == "M01_03_COP4600_GomesDeSeiqueira.pdf":
+            not_reached = False
+        if not_reached:
+            continue
+
+        if ext == ".pdf":
+            file_like = file_from_bytes(file)
+            full_text = extract_text_from_pdf(file_like)
+        elif ext == ".pptx":
+            file_like = file_from_bytes(file)
+            full_text = extract_text_from_pptx(file_like)
+        else:
+            print("Not ingesting file type:", ext)
+            continue
+
+        print("File being ingested:", filename)
+        print()
+
+        # chunk text
+        print("Chunking text with Gemini Flash 2.0 ...")
+        chunks = chunk_text_with_gemini(full_text)
+        print(f"Found {len(chunks)} chunks.")
+
+        # generate embeddings
+        print("Generating embeddings for each chunk ...")
+        embeddings = []
+        for chunk in chunks:
+            emb = generate_embedding(chunk)
+            embeddings.append(emb)
+        
+        # store in db
+        print("Storing resource and embeddings into the database ...")
+        store_resource_and_embeddings(full_text, chunks, embeddings, filename, url)
+
+
+
+    # print(f"Extracting text from {file_path} ...")
+    # _, ext = os.path.splitext(file_path)
+    # ext = ext.lower()
+    # if ext == ".pdf":
+    #     full_text = extract_text_from_pdf(file_path)
+    # elif ext == ".pptx":
+    #     full_text = extract_text_from_pptx(file_path)
+    # else:
+    #     print("Unsupported file type. Please provide a PDF or PPTX file.")
+    #     sys.exit(1)
     
-    print("Chunking text with Gemini Flash 2.0 ...")
-    chunks = chunk_text_with_gemini(full_text)
-    print(f"Found {len(chunks)} chunks.")
+    # print("Chunking text with Gemini Flash 2.0 ...")
+    # chunks = chunk_text_with_gemini(full_text)
+    # print(f"Found {len(chunks)} chunks.")
 
-    print("Generating embeddings for each chunk ...")
-    embeddings = []
-    for chunk in chunks:
-        emb = generate_embedding(chunk)
-        embeddings.append(emb)
+    # print("Generating embeddings for each chunk ...")
+    # embeddings = []
+    # for chunk in chunks:
+    #     emb = generate_embedding(chunk)
+    #     embeddings.append(emb)
 
-    print("Storing resource and embeddings into the database ...")
-    store_resource_and_embeddings(full_text, chunks, embeddings, filename, url)
+    # print("Storing resource and embeddings into the database ...")
+    # store_resource_and_embeddings(full_text, chunks, embeddings, filename, url)
 
 if __name__ == "__main__":
     main()
