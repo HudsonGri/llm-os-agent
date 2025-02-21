@@ -7,6 +7,8 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Separator } from "@/components/ui/separator"
 import type { Components } from 'react-markdown';
 import type { ReactNode, ComponentProps } from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrowNight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // Types and Interfaces
 interface SourceInfo {
@@ -168,11 +170,22 @@ const markdownComponents: Partial<Components> = {
   td: createMarkdownComponent('td'),
 
   // Special components with custom styling
-  pre: memo(({ children, ...props }) => (
-    <pre className="overflow-x-auto p-4 rounded-lg bg-zinc-100 my-4" {...props}>
-      {children}
-    </pre>
-  )),
+  pre: memo(({ children, ...props }) => {
+    // Extract the code content from the nested structure
+    const codeElement = Array.isArray(children) ? children[0] : children;
+    const codeContent = codeElement?.props?.children?.[0] || '';
+    const language = codeElement?.props?.className?.replace('language-', '') || 'text';
+
+    return (
+      <SyntaxHighlighter 
+        language={language} 
+        style={tomorrowNight} 
+        {...props}
+      >
+        {codeContent}
+      </SyntaxHighlighter>
+    );
+  }),
   code: memo(({ children, ...props }) => (
     <code className="px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-sm" {...props}>
       {children}

@@ -18,12 +18,12 @@ export async function GET() {
       .from(chats)
       .where(eq(chats.userId, userId))
       .groupBy(chats.conversationId)
-      .orderBy(asc(chats.conversationId));
+      .orderBy(sql`MIN(${chats.createdAt}) DESC`);
 
     const formattedConversations = conversations.map(conv => ({
       id: conv.id,
       firstMessage: conv.firstMessage.slice(0, 100),
-      timestamp: new Date(conv.timestamp).toLocaleString(),
+      timestamp: conv.timestamp,
     }));
 
     return NextResponse.json(formattedConversations);
