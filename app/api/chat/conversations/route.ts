@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { chats } from '@/lib/db/schema/chats';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, asc, sql } from 'drizzle-orm';
 import { getUserId } from '@/lib/actions/chats';
 
 export async function GET() {
@@ -18,7 +18,7 @@ export async function GET() {
       .from(chats)
       .where(eq(chats.userId, userId))
       .groupBy(chats.conversationId)
-      .orderBy(desc(chats.conversationId));
+      .orderBy(asc(chats.conversationId));
 
     const formattedConversations = conversations.map(conv => ({
       id: conv.id,
