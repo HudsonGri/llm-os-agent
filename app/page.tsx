@@ -136,33 +136,7 @@ export default function Chat() {
 
   return (
     <div className="flex w-full h-screen bg-zinc-50">
-      <div className="flex-1 flex flex-col min-w-0">
-        
-        <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleNewChat}
-                >
-                  <SquarePen className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>New Chat</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <ChatHistory
-            currentConversationId={conversationId}
-            onSelectConversation={setConversationId}
-            onNewChat={handleNewChat}
-          />
-        </div>
-
+      <div className="flex-1 flex flex-col min-w-0 relative">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-16">
             <h1 className="text-4xl font-semibold text-zinc-900 mb-8">Got an OS question?</h1>
@@ -194,43 +168,41 @@ export default function Chat() {
             </div>
           </div>
         ) : (
-          <ScrollArea className="flex-1">
-            <div className="max-w-5xl mx-auto py-6 px-4">
-              {messages.map((m, index) => {
-                const isLastMessage = index === messages.length - 1;
-                const isComplete = m.role === 'user' || (!isLastMessage || !isLoading);
-                return (
+          <>
+            <ScrollArea className="flex-1">
+              <div className="max-w-3xl mx-auto py-6 px-4">
+                {messages.map((m, index) => {
+                  const isLastMessage = index === messages.length - 1;
+                  const isComplete = m.role === 'user' || (!isLastMessage || !isLoading);
+                  return (
+                    <ChatMessage
+                      key={m.id}
+                      message={m}
+                      isTopicResult={isTopicResult}
+                      extractSourceNumbers={extractSourceNumbers}
+                      TopicBadge={TopicBadge}
+                      onRegenerate={m.role === 'assistant' ? () => reload() : undefined}
+                      isComplete={isComplete}
+                    />
+                  );
+                })}
+                {isLoading && messages[messages.length - 1]?.role === 'user' && (
                   <ChatMessage
-                    key={m.id}
-                    message={m}
+                    key="loading"
+                    message={{
+                      id: 'loading',
+                      role: 'assistant',
+                      content: '',
+                    }}
                     isTopicResult={isTopicResult}
                     extractSourceNumbers={extractSourceNumbers}
                     TopicBadge={TopicBadge}
-                    onRegenerate={m.role === 'assistant' ? () => reload() : undefined}
-                    isComplete={isComplete}
+                    isComplete={false}
                   />
-                );
-              })}
-              {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                <ChatMessage
-                  key="loading"
-                  message={{
-                    id: 'loading',
-                    role: 'assistant',
-                    content: '',
-                  }}
-                  isTopicResult={isTopicResult}
-                  extractSourceNumbers={extractSourceNumbers}
-                  TopicBadge={TopicBadge}
-                  isComplete={false}
-                />
-              )}
-            </div>
-          </ScrollArea>
-        )}
+                )}
+              </div>
+            </ScrollArea>
 
-        {messages.length > 0 && (
-          <div className="relative">
             <ChatInput
               input={input}
               handleInputChange={handleInputChange}
@@ -238,9 +210,14 @@ export default function Chat() {
               isLoading={isLoading}
               stop={stop}
             />
-          </div>
+          </>
         )}
       </div>
+      <ChatHistory
+        currentConversationId={conversationId}
+        onSelectConversation={setConversationId}
+        onNewChat={handleNewChat}
+      />
     </div>
   );
 }

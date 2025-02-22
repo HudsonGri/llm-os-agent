@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react';
-import { FileStack, PlusCircle, MessageSquare, Clock, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,13 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isToday, isYesterday, subDays } from 'date-fns';
 
 interface ChatHistoryProps {
   currentConversationId: string | null;
@@ -41,16 +28,39 @@ interface Conversation {
   timestamp: string;
 }
 
-function truncateMessage(message: string, maxLength: number = 40): string {
+function truncateMessage(message: string, maxLength: number = 35): string {
   if (message.length <= maxLength) return message;
   return message.slice(0, maxLength).trim() + '...';
+}
+
+function groupConversationsByDate(conversations: Conversation[]) {
+  const today = new Date();
+  const sevenDaysAgo = subDays(today, 7);
+
+  return conversations.reduce((groups, conv) => {
+    const date = new Date(conv.timestamp);
+    
+    if (isToday(date)) {
+      if (!groups.today) groups.today = [];
+      groups.today.push(conv);
+    } else if (isYesterday(date)) {
+      if (!groups.yesterday) groups.yesterday = [];
+      groups.yesterday.push(conv);
+    } else if (date > sevenDaysAgo) {
+      if (!groups.previousWeek) groups.previousWeek = [];
+      groups.previousWeek.push(conv);
+    } else {
+      if (!groups.older) groups.older = [];
+      groups.older.push(conv);
+    }
+    
+    return groups;
+  }, {} as Record<string, Conversation[]>);
 }
 
 export function ChatHistory({ currentConversationId, onSelectConversation, onNewChat }: ChatHistoryProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function loadConversations() {
     setIsLoading(true);
@@ -66,22 +76,9 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
     }
   }
 
-  // Load conversations when component mounts or sheet opens
   useEffect(() => {
-    if (isOpen) {
-      loadConversations();
-    }
-  }, [isOpen]);
-
-  const handleNewChat = () => {
-    onNewChat();
-    setIsOpen(false);
-  };
-
-  const handleSelectConversation = (id: string) => {
-    onSelectConversation(id);
-    setIsOpen(false);
-  };
+    loadConversations();
+  }, []);
 
   const handleDeleteConversation = async (id: string) => {
     try {
@@ -91,128 +88,113 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
       
       if (!response.ok) throw new Error('Failed to delete conversation');
       
-      // If we're deleting the current conversation, start a new one
       if (id === currentConversationId) {
         onNewChat();
       }
       
-      // Reload the conversations list
       loadConversations();
     } catch (error) {
       console.error('Error deleting conversation:', error);
     }
   };
 
-  return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <FileStack className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Chat History</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <SheetContent className="w-[400px] sm:w-[540px] p-0">
-        <SheetHeader className="p-6 border-b">
-          <SheetTitle className="text-xl font-semibold">Your Conversations</SheetTitle>
-        </SheetHeader>
-        <div className="px-4 py-2">
-          <Button 
-            className="w-full gap-2 text-base py-6" 
-            onClick={handleNewChat}
-            disabled={isLoading}
+  const groupedConversations = groupConversationsByDate(conversations);
+
+  const ConversationGroup = ({ title, conversations }: { title: string; conversations: Conversation[] }) => (
+    <div className="space-y-1">
+      <h3 className="text-xs font-medium text-zinc-400 px-3 py-2 uppercase tracking-wider">{title}</h3>
+      {conversations.map((conv) => (
+        <div key={conv.id} className="group relative px-2">
+          <Button
+            variant={currentConversationId === conv.id ? "secondary" : "ghost"}
+            className={`w-full justify-start text-left px-3 py-2 h-auto rounded-md text-sm
+              ${currentConversationId === conv.id ? 'bg-zinc-100 text-zinc-900 font-medium' : 'text-zinc-600 hover:text-zinc-900'}`}
+            onClick={() => onSelectConversation(conv.id)}
           >
-            <PlusCircle className="h-5 w-5" />
-            Start New Chat
+            <div className="truncate">{truncateMessage(conv.firstMessage)}</div>
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+              >
+                <Trash2 className="h-3 w-3 text-zinc-400 hover:text-red-500 transition-colors" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this conversation? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDeleteConversation(conv.id)}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-        <ScrollArea className="h-[calc(100vh-10rem)]">
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="w-72 border-l border-zinc-200 bg-white h-screen flex flex-col">
+      <div className="p-4">
+        <Button 
+          variant="outline"
+          className="w-full gap-2 text-sm h-9 px-4 bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900 transition-colors rounded-lg shadow-sm" 
+          onClick={onNewChat}
+          disabled={isLoading}
+        >
+          <PlusCircle className="h-3.5 w-3.5" />
+          <span className="font-medium">Start New Chat</span>
+        </Button>
+      </div>
+      
+      <div className="px-2 mb-2">
+        <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
+      </div>
+      
+      <ScrollArea className="flex-1 px-2">
+        <div className="py-2">
           {isLoading ? (
-            <div className="space-y-3 px-4">
+            <div className="space-y-2 px-1">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="p-4 rounded-lg border">
-                  <Skeleton className="h-5 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/4" />
-                </div>
+                <Skeleton key={i} className="h-8 w-full rounded-md" />
               ))}
             </div>
           ) : (
-            <div className="space-y-3 pb-4 px-4 max-w-full">
-              {conversations.length === 0 ? (
-                <div className="text-center py-12 px-4">
-                  <div className="bg-muted/50 rounded-full p-4 w-16 h-16 mx-auto mb-4">
-                    <MessageSquare className="h-8 w-8 mx-auto opacity-50" />
-                  </div>
-                  <h3 className="font-semibold mb-1">No conversations yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Start a new chat to begin your conversation
-                  </p>
-                  <Button onClick={handleNewChat} className="gap-2">
-                    <PlusCircle className="h-4 w-4" />
-                    New Chat
-                  </Button>
+            <div className="space-y-4">
+              {groupedConversations.today?.length > 0 && (
+                <ConversationGroup title="Today" conversations={groupedConversations.today} />
+              )}
+              {groupedConversations.yesterday?.length > 0 && (
+                <ConversationGroup title="Yesterday" conversations={groupedConversations.yesterday} />
+              )}
+              {groupedConversations.previousWeek?.length > 0 && (
+                <ConversationGroup title="Previous 7 Days" conversations={groupedConversations.previousWeek} />
+              )}
+              {groupedConversations.older?.length > 0 && (
+                <ConversationGroup title="Older" conversations={groupedConversations.older} />
+              )}
+              {Object.keys(groupedConversations).length === 0 && (
+                <div className="text-center py-8 px-4">
+                  <p className="text-sm text-zinc-400">No conversations yet</p>
                 </div>
-              ) : (
-                conversations.map((conv) => (
-                  <div key={conv.id} className="group relative">
-                    <Button
-                      variant={currentConversationId === conv.id ? "default" : "ghost"}
-                      className={`w-full justify-start text-left p-4 h-auto rounded-lg hover:bg-zinc-200 transition-colors
-                        ${currentConversationId === conv.id ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-zinc-100'}`}
-                      onClick={() => handleSelectConversation(conv.id)}
-                    >
-                      <div className="flex flex-col gap-1 w-full">
-                        <div className="font-medium truncate break-all">
-                          {truncateMessage(conv.firstMessage)}
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{formatDistanceToNow(new Date(conv.timestamp), { addSuffix: true })}</span>
-                        </div>
-                      </div>
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                        >
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete this conversation? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteConversation(conv.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                ))
               )}
             </div>
           )}
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </ScrollArea>
+    </div>
   );
 } 

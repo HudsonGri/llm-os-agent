@@ -50,8 +50,8 @@ export function ChatInput({
   const isEmptyVariant = variant === 'empty';
 
   return (
-    <div className={isEmptyVariant ? '' : "border-t border-zinc-200 bg-white/80 backdrop-blur-xl"}>
-      <form onSubmit={handleSubmit} className={isEmptyVariant ? '' : "max-w-4xl mx-auto p-4"}>
+    <div className={isEmptyVariant ? '' : "border-t border-zinc-200 bg-white py-4"}>
+      <form onSubmit={handleSubmit} className={isEmptyVariant ? '' : "max-w-3xl mx-auto px-4"}>
         <div className="relative flex items-start">
           <div className="relative flex-1">
             <textarea
