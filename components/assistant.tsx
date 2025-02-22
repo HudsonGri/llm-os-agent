@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import type { Components } from 'react-markdown';
 import type { ReactNode, ComponentProps } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrowNight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // Types and Interfaces
 interface SourceInfo {
@@ -199,7 +199,7 @@ const markdownComponents: Partial<Components> = {
         </button>
         <SyntaxHighlighter 
           language={language} 
-          style={tomorrowNight}
+          style={prism}
           {...props}
         >
           {codeContent}
