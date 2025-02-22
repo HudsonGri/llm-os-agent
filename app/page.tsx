@@ -9,7 +9,7 @@ import { TopicBadge } from '@/components/chat/topic-badge';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ChatHistory } from '@/components/chat/chat-history';
-import { PlusCircle, SquarePen } from 'lucide-react';
+import { SquarePen, Sparkles, BookOpen, Code, Terminal } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -112,9 +112,32 @@ export default function Chat() {
     setInitialMessages([]);
   };
 
+  // Sample questions that will be shown on the empty state
+  const sampleQuestions = [
+    {
+      text: "What does a void pointer do?",
+      icon: Sparkles,
+    },
+    {
+      text: "What is the penalty for submitting assignments late?",
+      icon: BookOpen,
+    },
+    {
+      text: "What software is required for this course?",
+      icon: Code,
+    },
+  ];
+
+  const handleSampleQuestion = (question: string) => {
+    // Set the input value and submit
+    handleInputChange({ target: { value: question } } as React.ChangeEvent<HTMLInputElement>);
+    handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+  };
+
   return (
     <div className="flex w-full h-screen bg-zinc-50">
       <div className="flex-1 flex flex-col min-w-0">
+        
         <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
           <TooltipProvider>
             <Tooltip>
@@ -139,50 +162,84 @@ export default function Chat() {
             onNewChat={handleNewChat}
           />
         </div>
-        <ScrollArea className="flex-1">
-          <div className="max-w-5xl mx-auto py-6 px-4">
-            {messages.map((m, index) => {
-              const isLastMessage = index === messages.length - 1;
-              const isComplete = m.role === 'user' || (!isLastMessage || !isLoading);
-              return (
+
+        {messages.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-16">
+            <h1 className="text-4xl font-semibold text-zinc-900 mb-8">Got an OS question?</h1>
+            <div className="w-full max-w-md space-y-4">
+              <div className="relative">
+                <ChatInput
+                  input={input}
+                  handleInputChange={handleInputChange}
+                  handleSubmit={handleSubmit}
+                  isLoading={isLoading}
+                  stop={stop}
+                  variant="empty"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 gap-3 mt-8">
+                {sampleQuestions.map((question, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className="w-full justify-start gap-3 py-6 text-left text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 rounded-2xl border-zinc-200"
+                    onClick={() => handleSampleQuestion(question.text)}
+                  >
+                    <question.icon className="h-5 w-5" />
+                    {question.text}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ScrollArea className="flex-1">
+            <div className="max-w-5xl mx-auto py-6 px-4">
+              {messages.map((m, index) => {
+                const isLastMessage = index === messages.length - 1;
+                const isComplete = m.role === 'user' || (!isLastMessage || !isLoading);
+                return (
+                  <ChatMessage
+                    key={m.id}
+                    message={m}
+                    isTopicResult={isTopicResult}
+                    extractSourceNumbers={extractSourceNumbers}
+                    TopicBadge={TopicBadge}
+                    onRegenerate={m.role === 'assistant' ? () => reload() : undefined}
+                    isComplete={isComplete}
+                  />
+                );
+              })}
+              {isLoading && messages[messages.length - 1]?.role === 'user' && (
                 <ChatMessage
-                  key={m.id}
-                  message={m}
+                  key="loading"
+                  message={{
+                    id: 'loading',
+                    role: 'assistant',
+                    content: '',
+                  }}
                   isTopicResult={isTopicResult}
                   extractSourceNumbers={extractSourceNumbers}
                   TopicBadge={TopicBadge}
-                  onRegenerate={m.role === 'assistant' ? () => reload() : undefined}
-                  isComplete={isComplete}
+                  isComplete={false}
                 />
-              );
-            })}
-            {isLoading && messages[messages.length - 1]?.role === 'user' && (
-              <ChatMessage
-                key="loading"
-                message={{
-                  id: 'loading',
-                  role: 'assistant',
-                  content: '',
-                }}
-                isTopicResult={isTopicResult}
-                extractSourceNumbers={extractSourceNumbers}
-                TopicBadge={TopicBadge}
-                isComplete={false}
-              />
-            )}
+              )}
+            </div>
+          </ScrollArea>
+        )}
 
+        {messages.length > 0 && (
+          <div className="relative">
+            <ChatInput
+              input={input}
+              handleInputChange={handleInputChange}
+              handleSubmit={handleSubmit}
+              isLoading={isLoading}
+              stop={stop}
+            />
           </div>
-        </ScrollArea>
-
-        <div className="relative">
-          <ChatInput
-            input={input}
-            handleInputChange={handleInputChange}
-            handleSubmit={handleSubmit}
-            isLoading={isLoading}
-            stop={stop}
-          />
-        </div>
+        )}
       </div>
     </div>
   );

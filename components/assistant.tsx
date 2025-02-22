@@ -2,7 +2,7 @@ import React, { memo, useMemo, createContext, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Copy, Check } from 'lucide-react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator"
 import type { Components } from 'react-markdown';
@@ -176,14 +176,35 @@ const markdownComponents: Partial<Components> = {
     const codeContent = codeElement?.props?.children?.[0] || '';
     const language = codeElement?.props?.className?.replace('language-', '') || 'text';
 
+    const [copied, setCopied] = React.useState(false);
+
+    const handleCopy = () => {
+      navigator.clipboard.writeText(codeContent);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
-      <SyntaxHighlighter 
-        language={language} 
-        style={tomorrowNight} 
-        {...props}
-      >
-        {codeContent}
-      </SyntaxHighlighter>
+      <div className="relative group">
+        <button
+          onClick={handleCopy}
+          className="absolute right-2 top-2 p-1.5 rounded-md bg-zinc-100 hover:bg-zinc-200 transition-colors"
+          aria-label="Copy code"
+        >
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-zinc-700" />
+          ) : (
+            <Copy className="h-3.5 w-3.5 text-zinc-700" />
+          )}
+        </button>
+        <SyntaxHighlighter 
+          language={language} 
+          style={tomorrowNight}
+          {...props}
+        >
+          {codeContent}
+        </SyntaxHighlighter>
+      </div>
     );
   }),
   code: memo(({ children, ...props }) => (
@@ -193,7 +214,7 @@ const markdownComponents: Partial<Components> = {
   )),
   a: memo(({ children, href, ...props }) => (
     <Link
-      className="text-blue-500 hover:underline"
+      className="text-blue-500 hover:text-blue-600 hover:underline"
       href={href || '#'}
       target="_blank"
       rel="noreferrer"

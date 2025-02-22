@@ -1,0 +1,25 @@
+{
+  "resource_id": "c4731af7-9443-4a7e-ae18-bb15d44d3425",
+  "questions": [
+    {
+      "question": "What are the key differences between TCP and UDP in terms of connection orientation and data delivery?",
+      "topic": "TCP vs UDP: Connection and Delivery"
+    },
+    {
+      "question": "Explain the three-way handshake process in TCP and its purpose in establishing a connection.",
+      "topic": "TCP Three-Way Handshake"
+    },
+    {
+      "question": "How does TCP ensure reliable data delivery, and what mechanisms does it use to handle lost packets?",
+      "topic": "TCP Reliability and Error Handling"
+    },
+    {
+      "question": "In what scenarios would UDP be preferred over TCP, and why are those scenarios better suited for UDP?",
+      "topic": "UDP Use Cases"
+    },
+    {
+      "question": "Describe how TCP handles the closing of a connection between two computers.",
+      "topic": "TCP Connection Closing"
+    }
+  ]
+}
