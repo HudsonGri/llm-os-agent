@@ -56,7 +56,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
         <Button
           variant="ghost"
           size="icon"
-          className={`h-7 w-7 rounded-md ${rating === 'up' ? 'text-zinc-900' : 'text-zinc-400'} transition-colors`}
+          className={`h-7 w-7 rounded-md ${rating === 'up' ? 'text-zinc-900' : 'text-zinc-400'} transition-colors cursor-pointer`}
           onClick={() => handleRating('up')}
         >
           <ThumbsUp className="h-4 w-4" />
@@ -73,7 +73,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
         <Button
           variant="ghost"
           size="icon"
-          className={`h-7 w-7 rounded-md ${rating === 'down' ? 'text-zinc-900' : 'text-zinc-400'} transition-colors`}
+          className={`h-7 w-7 rounded-md ${rating === 'down' ? 'text-zinc-900' : 'text-zinc-400'} transition-colors cursor-pointer`}
           onClick={() => handleRating('down')}
         >
           <ThumbsDown className="h-4 w-4" />
@@ -83,7 +83,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7 rounded-md text-zinc-400 hover:text-zinc-900 transition-colors"
+        className="h-7 w-7 rounded-md text-zinc-400 hover:text-zinc-900 transition-colors cursor-pointer"
         onClick={onRegenerate}
       >
         <RotateCcw className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7 rounded-md text-zinc-400 hover:text-zinc-900 transition-colors"
+        className="h-7 w-7 rounded-md text-zinc-400 hover:text-zinc-900 transition-colors cursor-pointer"
         onClick={handleCopy}
       >
         {copied ? (
