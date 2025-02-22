@@ -1,14 +1,34 @@
-# Vercel AI SDK RAG Guide Starter Project
+# OS LLM Agent
 
-This is the starter project for the Vercel AI SDK [Retrieval-Augmented Generation (RAG) guide](https://sdk.vercel.ai/docs/guides/rag-chatbot).
+An AI-powered learning assistant for Operating Systems students that provides contextual help using course materials and tracks learning patterns to improve course delivery.
 
-In this project, you will build a chatbot that will only respond with information that it has within its knowledge base. The chatbot will be able to both store and retrieve information. This project has many interesting use cases from customer support through to building your own second brain!
+## Overview
 
-This project will use the following stack:
+The OS LLM Agent is a specialized chatbot designed to enhance the learning experience in the Operating System (COP4600) course at The University of Florida. By leveraging Large Language Models and Retrieval Augmented Generation (RAG), it provides students with 24/7 access to course-specific assistance while giving instructors valuable insights into student learning patterns.
 
-- [Next.js](https://nextjs.org) 14 (App Router)
-- [Vercel AI SDK](https://sdk.vercel.ai/docs)
-- [OpenAI](https://openai.com)
-- [Drizzle ORM](https://orm.drizzle.team)
-- [Postgres](https://www.postgresql.org/) with [ pgvector ](https://github.com/pgvector/pgvector)
-- [shadcn-ui](https://ui.shadcn.com) and [TailwindCSS](https://tailwindcss.com) for styling
+### Key Features
+
+- **Contextual Course Assistance**: Get immediate, accurate answers based on official course materials
+- **Resource References**: Direct links to relevant slides and course materials in responses
+- **Canvas Integration**: Seamless access through Canvas course pages
+- **Analytics Dashboard**: Insights for instructors on common student questions and pain points
+- **Continuous Learning**: System improves over time through usage patterns and feedback
+
+## Tech Stack
+
+- **Frontend**: Next.js, React, Tailwind CSS, Shadcn UI
+- **Backend**: Python, Next.js API Routes
+- **Database**: PostgreSQL with pgvector for embeddings
+- **AI/ML**: OpenAI/Google LLMs, text-embedding-3 for RAG
+- **Integration**: Canvas LMS API
+
+
+## Team
+
+- Michael Tang
+- Hudson Griffith
+- Erik Hartker
+
+## Acknowledgments
+
+Project developed under the guidance of Alexandre Gomes de Siqueira at the University of Florida.
