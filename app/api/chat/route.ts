@@ -6,6 +6,7 @@ import { findRelevantContent } from '@/lib/ai/embedding';
 import { saveMessage, createConversation } from '@/lib/actions/chats';
 import { headers } from 'next/headers';
 
+// TODO: Test if this is needed/useful
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
       conversationId,
       userIp,
       userAgent,
+      messages: messages
     });
   }
 
@@ -43,7 +45,7 @@ export async function POST(req: Request) {
     system: `You are a helpful assistant specialized in answering questions about the course content.
     Always check your course slide knowledge base before answering. 
     Only respond with information from tool calls; if no relevant information is found, respond with "Sorry, I don't know."
-    If you use a specific course slide content, mention it by stating 【source_NUMBER】 at the very end of your response (e.g. 【source_1】) You can only cite a single source once, so if you cite a source, don't cite it again in the same response.`,
+    If you use a specific course slide content, mention it by stating a source tag 【source_NUMBER】 at the very end of your response (e.g. 【source_1】) You can only cite a single source once, so if you cite a source, don't cite it again in the same response. If you are not provided any sources from the tool call, don't mention any source tags.`,
     messages,
     tools: {
       getInformation: tool({
@@ -74,6 +76,7 @@ export async function POST(req: Request) {
           userAgent,
           processingTime: Date.now() - startTime,
           tokenCount: completion.usage?.completionTokens,
+          messages: messages
         });
       } catch (error) {
         console.error('Error saving assistant message:', error);
@@ -83,6 +86,9 @@ export async function POST(req: Request) {
 
   // Return streaming response with conversation ID
   return result.toDataStreamResponse({ 
-    headers: { 'x-conversation-id': conversationId }
+    headers: { 
+      'x-conversation-id': conversationId,
+      'Set-Cookie': `conversationId=${conversationId}; Path=/; SameSite=Strict`
+    }
   });
 }

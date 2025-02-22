@@ -41,7 +41,7 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, TopicBadge, onRegenerate, isComplete }: ChatMessageProps) {
   return (
-    <div 
+    <div
       className={cn(
         "mb-6 last:mb-0",
         m.role === "assistant" ? "ml-0" : "flex justify-end"
@@ -75,15 +75,25 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                       <span className="text-sm text-zinc-500">Generating response...</span>
                     </div>
                   ) : (
-                    <AssistantMessage message={m.content} />
+                    <div>
+                      <AssistantMessage
+                        message={{
+                          content: m.content,
+                          toolInvocations: m.toolInvocations?.map(t => ({
+                            toolName: t.toolName,
+                            result: t.result
+                          }))
+                        }}
+                      />
+                    </div>
                   )}
-                  
+
                   {/* Rating buttons integrated with the message */}
                   {isComplete && m.role === 'assistant' && (
                     <div className="mt-2">
-                      <MessageRating 
-                        messageId={m.id} 
-                        isComplete={isComplete} 
+                      <MessageRating
+                        messageId={m.id}
+                        isComplete={isComplete}
                         onRegenerate={onRegenerate}
                         content={m.content}
                       />
@@ -91,16 +101,16 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                   )}
                 </div>
 
-                
+
                 {/* Referenced Sources */}
                 {extractSourceNumbers(m.content).length > 0 && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                     className="pt-4 border-t border-zinc-200"
                   >
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2, duration: 0.2 }}
@@ -116,7 +126,7 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                               ?.find(t => t.toolName === 'getInformation')
                               ?.result as any[];
                             const source = sourceInfo?.[sourceNum - 1];
-                            
+
                             return (
                               <motion.div
                                 key={sourceNum}
@@ -125,53 +135,27 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                                 transition={{ delay: 0.3 + index * 0.1, duration: 0.2 }}
                                 className="flex-none"
                               >
-                                <HoverCard>
-                                  <HoverCardTrigger asChild>
-                                    <a
-                                      href={source?.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="block"
-                                    >
-                                      <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 transition-colors border border-zinc-200">
-                                        <span className="flex-none inline-flex items-center justify-center w-6 h-6 text-xs font-medium rounded-full bg-zinc-700 text-white">
-                                          {sourceNum}
-                                        </span>
-                                        <div className="text-sm min-w-0">
-                                          <div className="font-medium truncate text-zinc-900">
-                                            {source?.filename || `Source ${sourceNum}`}
-                                          </div>
-                                          <div className="text-xs text-zinc-500 flex items-center gap-1.5 mt-0.5">
-                                            <span className="inline-block w-1 h-1 rounded-full bg-zinc-400" />
-                                            Click to view source
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </a>
-                                  </HoverCardTrigger>
-                                  <HoverCardContent 
-                                    side="top" 
-                                    className="w-80 p-0 overflow-hidden bg-white border border-zinc-200 shadow-lg"
-                                  >
-                                    <div className="relative aspect-video bg-zinc-100">
-                                      <Image
-                                        src="/placeholder.png"
-                                        alt="Preview"
-                                        fill
-                                        className="object-cover transition-all"
-                                        sizes="320px"
-                                      />
-                                    </div>
-                                    <div className="p-3">
-                                      <div className="font-medium text-sm mb-1 text-zinc-900">
+                                <a
+                                  href={source?.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block"
+                                >
+                                  <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 transition-colors border border-zinc-200">
+                                    <span className="flex-none inline-flex items-center justify-center w-6 h-6 text-xs font-medium rounded-full bg-zinc-700 text-white">
+                                      {sourceNum}
+                                    </span>
+                                    <div className="text-sm min-w-0">
+                                      <div className="font-medium truncate text-zinc-900">
                                         {source?.filename || `Source ${sourceNum}`}
                                       </div>
-                                      <p className="text-xs text-zinc-500 line-clamp-2">
-                                        Preview of the matching slide.
-                                      </p>
+                                      <div className="text-xs text-zinc-500 flex items-center gap-1.5 mt-0.5">
+                                        <span className="inline-block w-1 h-1 rounded-full bg-zinc-400" />
+                                        Click to visit source
+                                      </div>
                                     </div>
-                                  </HoverCardContent>
-                                </HoverCard>
+                                  </div>
+                                </a>
                               </motion.div>
                             );
                           })}
