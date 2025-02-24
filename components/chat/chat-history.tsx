@@ -105,42 +105,46 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
       <h3 className="text-xs font-medium text-zinc-400 px-3 py-2 uppercase tracking-wider">{title}</h3>
       {conversations.map((conv) => (
         <div key={conv.id} className="group relative px-2">
-          <Button
-            variant={currentConversationId === conv.id ? "secondary" : "ghost"}
-            className={`w-full justify-start text-left px-3 py-2 h-auto rounded-md text-sm
-              ${currentConversationId === conv.id ? 'bg-zinc-100 text-zinc-900 font-medium' : 'text-zinc-600 hover:text-zinc-900'}`}
-            onClick={() => onSelectConversation(conv.id)}
-          >
-            <div className="truncate">{truncateMessage(conv.firstMessage)}</div>
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
-              >
-                <Trash2 className="h-3 w-3 text-zinc-400 hover:text-red-500 transition-colors" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this conversation? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleDeleteConversation(conv.id)}
-                  className="bg-red-600 text-white hover:bg-red-700"
+          <div className="flex items-center">
+            <Button
+              variant={currentConversationId === conv.id ? "secondary" : "ghost"}
+              className={`flex-1 justify-start text-left px-3 py-2 h-auto rounded-md text-sm
+                ${currentConversationId === conv.id ? 'bg-zinc-100 text-zinc-900 font-medium' : 'text-zinc-600 hover:text-zinc-900'}`}
+              onClick={() => onSelectConversation(conv.id)}
+            >
+              <div className="truncate">{truncateMessage(conv.firstMessage)}</div>
+            </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex-shrink-0 h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500 ml-1 mr-2"
                 >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash2 className="h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-500 hover:text-red-500 transition-colors" />
+                  <span className="sr-only">Delete conversation</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this conversation? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDeleteConversation(conv.id)}
+                    className="bg-red-600 text-white hover:bg-red-700"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       ))}
     </div>
@@ -165,7 +169,7 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
       </div>
       
       <ScrollArea className="flex-1 px-2">
-        <div className="py-2">
+        <div className="py-2 pr-3">
           {isLoading ? (
             <div className="space-y-2 px-1">
               {[...Array(5)].map((_, i) => (

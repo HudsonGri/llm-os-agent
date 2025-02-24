@@ -9,7 +9,7 @@ import { MessageRating } from './message-rating';
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface Message {
   id: string;
@@ -196,6 +196,7 @@ interface SimilarSourcesProps {
 
 function SimilarSources({ sources, citedSourceNumbers }: SimilarSourcesProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Get cited source filenames for duplicate checking
   const citedSourceFilenames = new Set(
@@ -217,6 +218,42 @@ function SimilarSources({ sources, citedSourceNumbers }: SimilarSourcesProps) {
     return true;
   }).sort((a, b) => (b.similarity || 0) - (a.similarity || 0)); // Sort by similarity
 
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsExpanded(false);
+      }
+    }
+
+    // Only add listener when expanded
+    if (isExpanded) {
+      // Use capture phase to ensure we get the event first
+      document.addEventListener('mousedown', handleClickOutside, true);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [isExpanded]);
+
+  // Close on ESC key
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsExpanded(false);
+      }
+    }
+    
+    if (isExpanded) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isExpanded]);
+
   if (uncitedSources.length === 0) return null;
 
   return (
@@ -226,7 +263,7 @@ function SimilarSources({ sources, citedSourceNumbers }: SimilarSourcesProps) {
       transition={{ delay: 0.5, duration: 0.2 }}
       className="mt-3 flex items-start"
     >
-      <div className="relative inline-block">
+      <div className="relative inline-block" ref={dropdownRef}>
         <Button
           variant="ghost"
           onClick={() => setIsExpanded(!isExpanded)}
