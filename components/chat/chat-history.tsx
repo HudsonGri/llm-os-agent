@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +29,8 @@ interface Conversation {
   timestamp: string;
 }
 
-function truncateMessage(message: string, maxLength: number = 35): string {
+function truncateMessage(message: string | undefined, maxLength: number = 35): string {
+  if (!message || message.trim() === '') return 'New conversation...';
   if (message.length <= maxLength) return message;
   return message.slice(0, maxLength).trim() + '...';
 }
@@ -62,6 +63,7 @@ function groupConversationsByDate(conversations: Conversation[]) {
 export function ChatHistory({ currentConversationId, onSelectConversation, onNewChat, reloadConversations }: ChatHistoryProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const previousConversationIds = useRef<Set<string>>(new Set());
 
   async function loadConversations(skipLoadingState = false) {
     if (!skipLoadingState) {
@@ -72,6 +74,13 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
       if (!response.ok) throw new Error('Failed to load conversations');
       const data = await response.json();
       setConversations(data);
+      
+      // Store conversation IDs for future reference
+      const newIds = new Set<string>();
+      data.forEach((conv: Conversation) => {
+        if (conv.id) newIds.add(conv.id);
+      });
+      previousConversationIds.current = newIds;
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {
@@ -88,7 +97,9 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
   }, []);
 
   useEffect(() => {
-    loadConversations();
+    // Skip loading state if selecting an existing conversation from our list
+    const skipLoadingState = currentConversationId ? previousConversationIds.current.has(currentConversationId) : false;
+    loadConversations(skipLoadingState);
   }, [currentConversationId]);
 
   const handleDeleteConversation = async (id: string) => {
@@ -114,50 +125,59 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
   const ConversationGroup = ({ title, conversations }: { title: string; conversations: Conversation[] }) => (
     <div className="space-y-1">
       <h3 className="text-xs font-medium text-zinc-400 px-3 py-2 uppercase tracking-wider">{title}</h3>
-      {conversations.map((conv) => (
-        <div key={conv.id} className="group relative px-2">
-          <div className="flex items-center">
-            <Button
-              variant={currentConversationId === conv.id ? "secondary" : "ghost"}
-              className={`flex-1 justify-start text-left px-3 py-2 h-auto rounded-md text-sm
-                ${currentConversationId === conv.id ? 'bg-zinc-100 text-zinc-900 font-medium' : 'text-zinc-600 hover:text-zinc-900'}`}
-              onClick={() => onSelectConversation(conv.id)}
-            >
-              <div className="truncate">{truncateMessage(conv.firstMessage)}</div>
-            </Button>
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="flex-shrink-0 h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500 ml-1 mr-2"
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-500 hover:text-red-500 transition-colors" />
-                  <span className="sr-only">Delete conversation</span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete this conversation? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => handleDeleteConversation(conv.id)}
-                    className="bg-red-600 text-white hover:bg-red-700"
+      {conversations.map((conv) => {
+        // Special case for current conversation being viewed
+        const isCurrentConversation = currentConversationId === conv.id;
+        // If this is the current conversation and has a blank message, use placeholder
+        const displayTitle = (isCurrentConversation && (!conv.firstMessage || conv.firstMessage.trim() === '')) 
+          ? 'Current conversation...' 
+          : truncateMessage(conv.firstMessage);
+        
+        return (
+          <div key={conv.id} className="group relative px-2">
+            <div className="flex items-center">
+              <Button
+                variant={isCurrentConversation ? "secondary" : "ghost"}
+                className={`flex-1 justify-start text-left px-3 py-2 h-auto rounded-md text-sm
+                  ${isCurrentConversation ? 'bg-zinc-100 text-zinc-900 font-medium' : 'text-zinc-600 hover:text-zinc-900'}`}
+                onClick={() => onSelectConversation(conv.id)}
+              >
+                <div className="truncate">{displayTitle}</div>
+              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="flex-shrink-0 h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500 ml-1 mr-2"
                   >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    <Trash2 className="h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-500 hover:text-red-500 transition-colors" />
+                    <span className="sr-only">Delete conversation</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this conversation? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDeleteConversation(conv.id)}
+                      className="bg-red-600 text-white hover:bg-red-700"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 

@@ -115,13 +115,21 @@ export default function Chat() {
   // Wrapper for handleSubmit to ensure new conversations appear in history
   const handleSubmitWithHistoryReload = useCallback((e: React.FormEvent) => {
     handleSubmit(e);
-    // If this is the first message, we'll need to reload the chat history after a delay
-    // to ensure the conversation is created in the database
+    
+    // If this is the first message, we need to ensure the chat appears in history
     if (messages.length === 0 && reloadChatHistory) {
+      // First immediate reload to show "Current conversation..." placeholder
+      reloadChatHistory(true);
+      
+      // Then another reload after a delay to get the actual first message
       setTimeout(() => {
-        // Skip loading state for the reload triggered by sending a message
         reloadChatHistory(true);
       }, 1000); // Add a delay to ensure the conversation is created
+      
+      // One more reload after response should be complete
+      setTimeout(() => {
+        reloadChatHistory(true);
+      }, 5000); // Longer delay to try to catch the completed response
     }
   }, [handleSubmit, messages.length, reloadChatHistory]);
 
