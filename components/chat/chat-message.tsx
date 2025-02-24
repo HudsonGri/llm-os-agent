@@ -75,7 +75,7 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                       className="p-4 flex items-center gap-3"
                     >
                       <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
-                      <span className="text-sm text-zinc-500">Generating response...</span>
+                      <span className="text-sm text-zinc-500">Thinking...</span>
                     </div>
                   ) : (
                     <div>
@@ -281,7 +281,7 @@ function SimilarSources({ sources, citedSourceNumbers }: SimilarSourcesProps) {
             transition={{ duration: 0.15 }}
             className="absolute left-0 top-full mt-1 min-w-[18rem] max-w-[32rem] z-10"
           >
-            <div className="bg-white rounded-lg shadow-lg border border-zinc-200 overflow-hidden">
+            <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
               <ScrollArea className="max-h-[200px]">
                 <div className="p-1 space-y-1">
                   {uncitedSources.map((source, index) => (

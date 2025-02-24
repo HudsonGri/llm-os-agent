@@ -2,7 +2,7 @@
 
 import { useChat, Message } from 'ai/react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { ChatMessage } from '@/components/chat/chat-message';
 import { ChatInput } from '@/components/chat/chat-input';
 import { TopicBadge } from '@/components/chat/topic-badge';
@@ -33,6 +33,8 @@ export default function Chat() {
   const [initialMessages, setInitialMessages] = React.useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
   const [reloadChatHistory, setReloadChatHistory] = React.useState<((skipLoadingState?: boolean) => Promise<void>) | null>(null);
+  // Add a cache to store the latest user message for each conversation
+  const [userMessageCache, setUserMessageCache] = useState<Record<string, string>>({});
 
   // Load most recent chat or existing chat from cookie
   useEffect(() => {
@@ -114,29 +116,44 @@ export default function Chat() {
 
   // Wrapper for handleSubmit to ensure new conversations appear in history
   const handleSubmitWithHistoryReload = useCallback((e: React.FormEvent) => {
+    // Store the user message before submitting
+    const userMessage = input.trim();
+    
+    // Submit the message
     handleSubmit(e);
     
+    // Store user message in the cache for immediate display
+    if (conversationId && userMessage) {
+      setUserMessageCache(prev => ({
+        ...prev,
+        [conversationId]: userMessage
+      }));
+    }
+    
     // If this is the first message, we need to ensure the chat appears in history
-    if (messages.length === 0 && reloadChatHistory) {
-      // First immediate reload to show "Current conversation..." placeholder
+    if (messages.length === 0 && reloadChatHistory && userMessage) {
+      // First immediate reload to show the conversation with user's message
       reloadChatHistory(true);
       
-      // Then another reload after a delay to get the actual first message
+      // Then another reload after the LLM starts responding
       setTimeout(() => {
         reloadChatHistory(true);
-      }, 1000); // Add a delay to ensure the conversation is created
-      
-      // One more reload after response should be complete
-      setTimeout(() => {
-        reloadChatHistory(true);
-      }, 5000); // Longer delay to try to catch the completed response
+      }, 1000);
     }
-  }, [handleSubmit, messages.length, reloadChatHistory]);
+  }, [handleSubmit, messages.length, reloadChatHistory, input, conversationId]);
 
   const handleNewChat = () => {
     // Generate new ID for the new chat
     const newId = crypto.randomUUID();
     document.cookie = `conversationId=${newId}; Path=/`;
+    
+    // Clear any existing cached messages for this new ID
+    setUserMessageCache(prev => {
+      const updated = { ...prev };
+      delete updated[newId];
+      return updated;
+    });
+    
     setConversationId(newId);
     setInitialMessages([]);
   };
@@ -158,9 +175,36 @@ export default function Chat() {
   ];
 
   const handleSampleQuestion = (question: string) => {
-    // Set the input value and submit
+    // Set the input value 
     handleInputChange({ target: { value: question } } as React.ChangeEvent<HTMLInputElement>);
-    handleSubmitWithHistoryReload({ preventDefault: () => {} } as React.FormEvent);
+    
+    // Submit with the preset question
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    
+    // Store the sample question in cache for immediate display
+    if (conversationId) {
+      setUserMessageCache(prev => ({
+        ...prev,
+        [conversationId]: question
+      }));
+    }
+    
+    // If this is the first message and we have a reload function
+    if (messages.length === 0 && reloadChatHistory) {
+      // Submit the question
+      handleSubmit(fakeEvent);
+      
+      // Immediately reload to show the conversation with the sample question
+      reloadChatHistory(true);
+      
+      // Then reload after a short delay
+      setTimeout(() => {
+        reloadChatHistory(true);
+      }, 1000);
+    } else {
+      // Normal submission for follow-up questions
+      handleSubmitWithHistoryReload(fakeEvent);
+    }
   };
 
   // Function to receive the reload function from ChatHistory
@@ -252,6 +296,7 @@ export default function Chat() {
         onSelectConversation={setConversationId}
         onNewChat={handleNewChat}
         reloadConversations={handleReloadChatHistory}
+        userMessageCache={userMessageCache}
       />
     </div>
   );
