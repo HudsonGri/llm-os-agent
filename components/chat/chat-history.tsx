@@ -20,6 +20,7 @@ interface ChatHistoryProps {
   currentConversationId: string | null;
   onSelectConversation: (conversationId: string) => void;
   onNewChat: () => void;
+  reloadConversations?: (reloadFn: (skipLoadingState?: boolean) => Promise<void>) => void;
 }
 
 interface Conversation {
@@ -58,12 +59,14 @@ function groupConversationsByDate(conversations: Conversation[]) {
   }, {} as Record<string, Conversation[]>);
 }
 
-export function ChatHistory({ currentConversationId, onSelectConversation, onNewChat }: ChatHistoryProps) {
+export function ChatHistory({ currentConversationId, onSelectConversation, onNewChat, reloadConversations }: ChatHistoryProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  async function loadConversations() {
-    setIsLoading(true);
+  async function loadConversations(skipLoadingState = false) {
+    if (!skipLoadingState) {
+      setIsLoading(true);
+    }
     try {
       const response = await fetch('/api/chat/conversations');
       if (!response.ok) throw new Error('Failed to load conversations');
@@ -72,13 +75,21 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {
-      setIsLoading(false);
+      if (!skipLoadingState) {
+        setIsLoading(false);
+      }
     }
   }
 
   useEffect(() => {
-    loadConversations();
+    if (reloadConversations) {
+      reloadConversations((skipLoadingState = true) => loadConversations(skipLoadingState));
+    }
   }, []);
+
+  useEffect(() => {
+    loadConversations();
+  }, [currentConversationId]);
 
   const handleDeleteConversation = async (id: string) => {
     try {
@@ -92,7 +103,7 @@ export function ChatHistory({ currentConversationId, onSelectConversation, onNew
         onNewChat();
       }
       
-      loadConversations();
+      loadConversations(true);
     } catch (error) {
       console.error('Error deleting conversation:', error);
     }

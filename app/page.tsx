@@ -2,7 +2,7 @@
 
 import { useChat, Message } from 'ai/react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { ChatMessage } from '@/components/chat/chat-message';
 import { ChatInput } from '@/components/chat/chat-input';
 import { TopicBadge } from '@/components/chat/topic-badge';
@@ -32,6 +32,7 @@ export default function Chat() {
   const [conversationId, setConversationId] = React.useState<string | null>(null);
   const [initialMessages, setInitialMessages] = React.useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+  const [reloadChatHistory, setReloadChatHistory] = React.useState<((skipLoadingState?: boolean) => Promise<void>) | null>(null);
 
   // Load most recent chat or existing chat from cookie
   useEffect(() => {
@@ -102,7 +103,27 @@ export default function Chat() {
     body: {
       conversationId,
     },
+    onFinish: () => {
+      // Reload chat history when a message exchange is completed
+      // Skip loading state to avoid showing skeletons unnecessarily
+      if (reloadChatHistory) {
+        reloadChatHistory(true);
+      }
+    }
   });
+
+  // Wrapper for handleSubmit to ensure new conversations appear in history
+  const handleSubmitWithHistoryReload = useCallback((e: React.FormEvent) => {
+    handleSubmit(e);
+    // If this is the first message, we'll need to reload the chat history after a delay
+    // to ensure the conversation is created in the database
+    if (messages.length === 0 && reloadChatHistory) {
+      setTimeout(() => {
+        // Skip loading state for the reload triggered by sending a message
+        reloadChatHistory(true);
+      }, 1000); // Add a delay to ensure the conversation is created
+    }
+  }, [handleSubmit, messages.length, reloadChatHistory]);
 
   const handleNewChat = () => {
     // Generate new ID for the new chat
@@ -131,8 +152,13 @@ export default function Chat() {
   const handleSampleQuestion = (question: string) => {
     // Set the input value and submit
     handleInputChange({ target: { value: question } } as React.ChangeEvent<HTMLInputElement>);
-    handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+    handleSubmitWithHistoryReload({ preventDefault: () => {} } as React.FormEvent);
   };
+
+  // Function to receive the reload function from ChatHistory
+  const handleReloadChatHistory = useCallback((reloadFn: (skipLoadingState?: boolean) => Promise<void>) => {
+    setReloadChatHistory(() => reloadFn);
+  }, []);
 
   return (
     <div className="flex w-full h-screen bg-zinc-50">
@@ -145,7 +171,7 @@ export default function Chat() {
                 <ChatInput
                   input={input}
                   handleInputChange={handleInputChange}
-                  handleSubmit={handleSubmit}
+                  handleSubmit={handleSubmitWithHistoryReload}
                   isLoading={isLoading}
                   stop={stop}
                   variant="empty"
@@ -206,7 +232,7 @@ export default function Chat() {
             <ChatInput
               input={input}
               handleInputChange={handleInputChange}
-              handleSubmit={handleSubmit}
+              handleSubmit={handleSubmitWithHistoryReload}
               isLoading={isLoading}
               stop={stop}
             />
@@ -217,6 +243,7 @@ export default function Chat() {
         currentConversationId={conversationId}
         onSelectConversation={setConversationId}
         onNewChat={handleNewChat}
+        reloadConversations={handleReloadChatHistory}
       />
     </div>
   );
