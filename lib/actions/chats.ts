@@ -6,6 +6,7 @@ import { eq, desc, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { cookies } from 'next/headers';
 import { Message } from 'ai';
+import { tagMessageContent } from '@/lib/ai/topic-tagger';
 
 // Types
 type MessageRole = 'user' | 'assistant' | 'system' | 'data';
@@ -76,7 +77,8 @@ export async function createChatMessage(data: NewChat): Promise<Chat> {
         parentMessageId: data.parentMessageId,
         toolInvocations: data.toolInvocations,
         tokenCount: data.tokenCount,
-        processingTime: data.processingTime
+        processingTime: data.processingTime,
+        topic: data.topic
       })
       .returning();
     return chat;
@@ -92,7 +94,7 @@ export async function saveMessage({
   content,
   conversationId,
   parentMessageId,
-  toolInvocations,
+  toolInvocations = [],
   userAgent,
   userIp,
   tokenCount,
@@ -101,6 +103,18 @@ export async function saveMessage({
 }: SaveMessageParams): Promise<Chat> {
   try {
     const userId = await getUserId();
+
+    // Start topic tagging asynchronously (don't await here to avoid slowing down the response)
+    const topicTaggingPromise = (async () => {
+      try {
+        // Tag all message types with topics (user, assistant, and system)
+        const result = await tagMessageContent(content);
+        return result.topic;
+      } catch (error) {
+        console.error('Error tagging message:', error);
+        return 'General Question'; // Default fallback
+      }
+    })();
 
     if (role === 'assistant') {
       // Retrieve previous assistant message
@@ -118,21 +132,28 @@ export async function saveMessage({
           throw new Error('Invalid assistant message format');
         }
 
+        // Get the topic for this message
+        const topic = await topicTaggingPromise;
+
         const [updatedChat] = await db
           .update(chats)
           .set({
             content,
             tokenCount: (prevAssistantMessage.tokenCount || 0) + (tokenCount || 0),
             processingTime: (prevAssistantMessage.processingTime || 0) + (processingTime || 0),
-            toolInvocations: lastAssistantMessage.parts.map((invocation: { toolInvocation: any }) => ({
-              ...invocation.toolInvocation,
+            toolInvocations: lastAssistantMessage.parts.filter(part => 'toolInvocation' in part).map(invocation => ({
+              ...('toolInvocation' in invocation ? invocation.toolInvocation : {}),
             })),
+            topic, // Set the topic in the database
           })
           .where(eq(chats.id, prevAssistantMessage.id))
           .returning();
         return updatedChat;
       }
     }
+
+    // Wait for topic tagging to complete
+    const topic = await topicTaggingPromise;
 
     return await createChatMessage({
       id,
@@ -145,7 +166,8 @@ export async function saveMessage({
       parentMessageId,
       toolInvocations,
       tokenCount,
-      processingTime
+      processingTime,
+      topic, // Add the topic to the created message
     });
   } catch (error) {
     console.error('Error saving message:', error);
@@ -155,11 +177,12 @@ export async function saveMessage({
 
 export async function getConversationMessages(conversationId: string): Promise<Chat[]> {
   try {
-    return await db
+    const messages = await db
       .select()
       .from(chats)
       .where(eq(chats.conversationId, conversationId))
       .orderBy(asc(chats.createdAt));
+    return messages as Chat[];
   } catch (error) {
     console.error('Error fetching conversation messages:', error);
     throw new Error('Failed to fetch conversation messages');
@@ -172,7 +195,7 @@ export async function getMessageById(messageId: string): Promise<Chat | null> {
       .select()
       .from(chats)
       .where(eq(chats.id, messageId));
-    return chat || null;
+    return chat as Chat | null;
   } catch (error) {
     console.error('Error fetching message:', error);
     throw new Error('Failed to fetch message');

@@ -12,6 +12,9 @@ export const chats = pgTable('chats', {
   role: text('role').$type<'user' | 'assistant' | 'system' | 'data'>().notNull(),
   content: text('content').notNull(),
   
+  // Topic classification
+  topic: text('topic'), // New column for message topic classification
+  
   // Tool invocations and results
   toolInvocations: jsonb('tool_invocations').$type<Array<{
     toolName: string;

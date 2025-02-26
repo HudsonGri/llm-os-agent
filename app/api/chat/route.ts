@@ -3,6 +3,10 @@ import { openai } from '@ai-sdk/openai';
 import { streamText, tool, smoothStream } from 'ai';
 import { z } from 'zod';
 import { findRelevantContent } from '@/lib/ai/embedding';
+
+// Import function for asynchronous topic tagging
+import { tagMessageContent } from '@/lib/ai/topic-tagger';
+
 import { saveMessage, createConversation } from '@/lib/actions/chats';
 import { headers } from 'next/headers';
 
