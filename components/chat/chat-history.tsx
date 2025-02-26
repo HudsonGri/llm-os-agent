@@ -130,7 +130,7 @@ function ConversationGroup({
           <div key={conv.id} className="group relative mx-2 mb-1 rounded-md hover:bg-zinc-50 overflow-visible">
             <Button
               variant={isCurrentConversation ? "secondary" : "ghost"}
-              className={`w-full justify-start text-left px-3 py-2 h-auto rounded-md text-sm pr-10
+              className={`w-full justify-start text-left px-3 py-2 h-auto rounded-md text-sm pr-10 cursor-pointer
                 ${isCurrentConversation ? 'bg-zinc-100 text-zinc-900 font-medium' : 'text-zinc-600 hover:text-zinc-900'}`}
               onClick={() => onSelectConversation(conv.id)}
             >
@@ -163,14 +163,14 @@ function DeleteConversationButton({ onDelete }: DeleteConversationButtonProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 rounded backdrop-blur-sm hover:bg-red-50 hover:border-red-200 active:bg-red-100 transition-colors"
+          className="h-7 w-7 rounded backdrop-blur-sm hover:bg-red-50 hover:border-red-200 active:bg-red-100 transition-colors cursor-pointer group/trash"
           onClick={(e) => {
             // Only stop propagation to prevent triggering the conversation selection
             // but don't prevent default behavior which would block the dialog from opening
             e.stopPropagation();
           }}
         >
-          <Trash2 className="h-3.5 w-3.5 text-zinc-500 hover:text-red-600 transition-colors" />
+          <Trash2 className="h-3.5 w-3.5 text-zinc-500 group-hover/trash:text-red-600 transition-colors " />
           <span className="sr-only">Delete conversation</span>
         </Button>
       </AlertDialogTrigger>
