@@ -9,7 +9,7 @@ import { TopicBadge } from '@/components/chat/topic-badge';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ChatHistory } from '@/components/chat/chat-history';
-import { SquarePen, Sparkles, BookOpen, Code, Terminal } from 'lucide-react';
+import { SquarePen, Sparkles, BookOpen, Code, Terminal, RefreshCw } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -28,13 +28,52 @@ function isTopicResult(result: any): result is { topic: string } {
   return result && typeof result.topic === 'string';
 }
 
+// Simplified error message component
+function ErrorMessageComponent({ message, onRetry }: { message: string, onRetry: () => void }) {
+  return (
+    <div className="mb-8">
+      <div className="flex items-start">
+        <div className="border border-red-100 bg-red-50 rounded-xl p-4 mr-12 break-words w-full max-w-3xl">
+          <div className="text-zinc-600">{message}</div>
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-2"
+              onClick={onRetry}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Retry Response
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Chat() {
   const [conversationId, setConversationId] = React.useState<string | null>(null);
   const [initialMessages, setInitialMessages] = React.useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
   const [reloadChatHistory, setReloadChatHistory] = React.useState<((skipLoadingState?: boolean) => Promise<void>) | null>(null);
-  // Add a cache to store the latest user message for each conversation
   const [userMessageCache, setUserMessageCache] = useState<Record<string, string>>({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Create a new conversation ID
+  const createNewConversation = useCallback(() => {
+    const newId = crypto.randomUUID();
+    document.cookie = `conversationId=${newId}; Path=/`;
+    setConversationId(newId);
+    return newId;
+  }, []);
+
+  // Handle errors and provide a fallback
+  const handleError = useCallback((error: any, errorMsg: string) => {
+    console.error(errorMsg, error);
+    setErrorMessage(errorMsg);
+    return createNewConversation();
+  }, [createNewConversation]);
 
   // Load most recent chat or existing chat from cookie
   useEffect(() => {
@@ -50,7 +89,10 @@ export default function Chat() {
       if (!conversationId) {
         try {
           const response = await fetch('/api/chat/conversations');
-          if (!response.ok) throw new Error('Failed to load conversations');
+          if (!response.ok) {
+            throw new Error(`Failed to load conversations: ${response.status}`);
+          }
+          
           const conversations = await response.json();
           
           if (conversations.length > 0) {
@@ -60,22 +102,16 @@ export default function Chat() {
             setConversationId(mostRecentId);
           } else {
             // No existing conversations, create new one
-            const newId = crypto.randomUUID();
-            document.cookie = `conversationId=${newId}; Path=/`;
-            setConversationId(newId);
+            createNewConversation();
           }
         } catch (error) {
-          console.error('Error loading most recent chat:', error);
-          // Fallback to new conversation
-          const newId = crypto.randomUUID();
-          document.cookie = `conversationId=${newId}; Path=/`;
-          setConversationId(newId);
+          handleError(error, 'Unable to load chat history. Starting a new conversation.');
         }
       }
     }
 
     initializeChat();
-  }, []); // Only run on initial mount
+  }, [conversationId, createNewConversation, handleError]);
 
   // Load conversation history when conversationId changes
   useEffect(() => {
@@ -83,13 +119,18 @@ export default function Chat() {
 
     async function loadConversationHistory() {
       setIsLoadingHistory(true);
+      setErrorMessage(null); // Clear any previous errors
+      
       try {
         const response = await fetch(`/api/chat/history?conversationId=${conversationId}`);
-        if (!response.ok) throw new Error('Failed to load chat history');
-        const history = await response.json();
-        setInitialMessages(history);
+        if (!response.ok) {
+          throw new Error(`Failed to load chat history: ${response.status}`);
+        }
+        
+        setInitialMessages(await response.json());
       } catch (error) {
         console.error('Error loading chat history:', error);
+        setErrorMessage('Failed to load chat history. You can still send new messages.');
       } finally {
         setIsLoadingHistory(false);
       }
@@ -98,54 +139,62 @@ export default function Chat() {
     loadConversationHistory();
   }, [conversationId]);
 
+  // Set up chat with error handling
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop, reload } = useChat({
     maxSteps: 3,
     id: conversationId as string,
     initialMessages,
-    body: {
-      conversationId,
-    },
+    body: { conversationId },
     onFinish: () => {
       // Reload chat history when a message exchange is completed
-      // Skip loading state to avoid showing skeletons unnecessarily
       if (reloadChatHistory) {
-        reloadChatHistory(true);
+        reloadChatHistory(true); // Skip loading state
       }
+    },
+    onError: (error) => {
+      console.error('Chat API error:', error);
+      setErrorMessage(error.message || 'An error occurred while processing your request. Please try again.');
     }
   });
 
+  // Handle retrying after an error
+  const handleRetry = useCallback(() => {
+    setErrorMessage(null);
+    reload();
+  }, [reload]);
+
   // Wrapper for handleSubmit to ensure new conversations appear in history
   const handleSubmitWithHistoryReload = useCallback((e: React.FormEvent) => {
+    // Clear any previous error
+    setErrorMessage(null);
+    
     // Store the user message before submitting
     const userMessage = input.trim();
+    if (!userMessage) return;
     
     // Submit the message
     handleSubmit(e);
     
     // Store user message in the cache for immediate display
-    if (conversationId && userMessage) {
+    if (conversationId) {
       setUserMessageCache(prev => ({
         ...prev,
         [conversationId]: userMessage
       }));
     }
     
-    // If this is the first message, we need to ensure the chat appears in history
-    if (messages.length === 0 && reloadChatHistory && userMessage) {
-      // First immediate reload to show the conversation with user's message
+    // Handle first message in a conversation
+    if (messages.length === 0 && reloadChatHistory) {
+      // Reload to ensure the chat appears in history
       reloadChatHistory(true);
       
-      // Then another reload after the LLM starts responding
-      setTimeout(() => {
-        reloadChatHistory(true);
-      }, 1000);
+      // Then reload again after a short delay
+      setTimeout(() => reloadChatHistory(true), 1000);
     }
-  }, [handleSubmit, messages.length, reloadChatHistory, input, conversationId]);
+  }, [handleSubmit, input, conversationId, messages.length, reloadChatHistory]);
 
-  const handleNewChat = () => {
-    // Generate new ID for the new chat
-    const newId = crypto.randomUUID();
-    document.cookie = `conversationId=${newId}; Path=/`;
+  const handleNewChat = useCallback(() => {
+    const newId = createNewConversation();
     
     // Clear any existing cached messages for this new ID
     setUserMessageCache(prev => {
@@ -154,34 +203,23 @@ export default function Chat() {
       return updated;
     });
     
-    setConversationId(newId);
     setInitialMessages([]);
-  };
+  }, [createNewConversation]);
 
-  // Sample questions that will be shown on the empty state
+  // Sample questions for empty state
   const sampleQuestions = [
-    {
-      text: "What does a void pointer do?",
-      icon: Sparkles,
-    },
-    {
-      text: "What is the penalty for submitting assignments late?",
-      icon: BookOpen,
-    },
-    {
-      text: "What software is required for this course?",
-      icon: Code,
-    },
+    { text: "What does a void pointer do?", icon: Sparkles },
+    { text: "What is the penalty for submitting assignments late?", icon: BookOpen },
+    { text: "What software is required for this course?", icon: Code },
   ];
 
-  const handleSampleQuestion = (question: string) => {
-    // Set the input value 
+  // Function for handling preset sample questions
+  const handleSampleQuestion = useCallback((question: string) => {
+    // Set input and prepare submission
     handleInputChange({ target: { value: question } } as React.ChangeEvent<HTMLInputElement>);
-    
-    // Submit with the preset question
     const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
     
-    // Store the sample question in cache for immediate display
+    // Cache the question
     if (conversationId) {
       setUserMessageCache(prev => ({
         ...prev,
@@ -189,28 +227,26 @@ export default function Chat() {
       }));
     }
     
-    // If this is the first message and we have a reload function
+    // Different handling for first message vs follow-up
     if (messages.length === 0 && reloadChatHistory) {
-      // Submit the question
       handleSubmit(fakeEvent);
-      
-      // Immediately reload to show the conversation with the sample question
       reloadChatHistory(true);
-      
-      // Then reload after a short delay
-      setTimeout(() => {
-        reloadChatHistory(true);
-      }, 1000);
+      setTimeout(() => reloadChatHistory(true), 1000);
     } else {
-      // Normal submission for follow-up questions
       handleSubmitWithHistoryReload(fakeEvent);
     }
-  };
+  }, [conversationId, handleInputChange, handleSubmit, handleSubmitWithHistoryReload, messages.length, reloadChatHistory]);
 
   // Function to receive the reload function from ChatHistory
   const handleReloadChatHistory = useCallback((reloadFn: (skipLoadingState?: boolean) => Promise<void>) => {
     setReloadChatHistory(() => reloadFn);
   }, []);
+
+  // Check if we should show the error message in the chat
+  const shouldShowErrorInChat = errorMessage && messages.length > 0 && messages[messages.length - 1].role === 'user';
+  
+  // Check if we should show the loading indicator
+  const shouldShowLoading = isLoading && messages[messages.length - 1]?.role === 'user' && !errorMessage;
 
   return (
     <div className="flex w-full h-screen bg-zinc-50">
@@ -218,6 +254,11 @@ export default function Chat() {
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-16">
             <h1 className="text-4xl font-semibold text-zinc-900 mb-8">Got an OS question?</h1>
+            {errorMessage && (
+              <div className="w-full max-w-md mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                {errorMessage}
+              </div>
+            )}
             <div className="w-full max-w-md space-y-4">
               <div className="relative">
                 <ChatInput
@@ -264,7 +305,17 @@ export default function Chat() {
                     />
                   );
                 })}
-                {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                
+                {/* Show error message in the chat flow */}
+                {shouldShowErrorInChat && (
+                  <ErrorMessageComponent 
+                    message={errorMessage}
+                    onRetry={handleRetry}
+                  />
+                )}
+                
+                {/* Show loading indicator */}
+                {shouldShowLoading && (
                   <ChatMessage
                     key="loading"
                     message={{

@@ -261,7 +261,7 @@ function SimilarSources({ sources, citedSourceNumbers }: SimilarSourcesProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.5, duration: 0.2 }}
-      className="mt-3 flex items-start"
+      className="flex items-start"
     >
       <div className="relative inline-block" ref={dropdownRef}>
         <Button

@@ -311,7 +311,7 @@ export function ChatHistory({
       <ScrollArea className="flex-1 px-1 pb-4">
         <div className="py-2">
           {isLoading ? (
-            <ConversationSkeleton />
+            <> </>
           ) : error ? (
             <ErrorMessage message={error} onRetry={() => loadConversations(false)} />
           ) : (
@@ -325,19 +325,6 @@ export function ChatHistory({
           )}
         </div>
       </ScrollArea>
-    </div>
-  );
-}
-
-/**
- * Skeleton loader for conversations
- */
-function ConversationSkeleton() {
-  return (
-    <div className="space-y-2 px-1">
-      {[...Array(5)].map((_, i) => (
-        <Skeleton key={i} className="h-8 w-full rounded-md" />
-      ))}
     </div>
   );
 }
