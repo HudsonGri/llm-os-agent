@@ -24,8 +24,6 @@ export async function GET(request: Request) {
     const startDateString = startDate.toISOString();
     const endDateString = endDate.toISOString();
     
-    console.log('Date range:', { startDateString, endDateString });
-    
     // 1. Calculate student participation (unique users with conversations)
     const userParticipation = await db.execute(sql`
       SELECT 
@@ -35,8 +33,6 @@ export async function GET(request: Request) {
         AND ${chats.createdAt} <= ${endDateString}
         AND ${chats.role} = 'user'
     `);
-    
-    console.log('User participation:', userParticipation);
     
     // Get total registered users (assuming we have a users table)
     // If no users table, we'll just use the active users as our base
@@ -58,8 +54,6 @@ export async function GET(request: Request) {
       LIMIT 5
     `);
     
-    console.log('Top topics:', topTopics);
-    
     // 3. Get messages per conversation
     const messageMetrics = await db.execute(sql`
       SELECT
@@ -70,8 +64,6 @@ export async function GET(request: Request) {
         AND ${chats.createdAt} <= ${endDateString}
         AND ${chats.role} = 'user'
     `);
-    
-    console.log('Message metrics:', messageMetrics);
     
     const totalMessages = Number(messageMetrics[0]?.totalMessages) || 0;
     const totalConversations = Number(messageMetrics[0]?.totalConversations) || 0;
@@ -93,8 +85,6 @@ export async function GET(request: Request) {
       LIMIT 1
     `);
     
-    console.log('Busiest days:', busiestDays);
-    
     // 5. Get completion/success rate based on ratings (if available)
     const ratingsData = await db.execute(sql`
       SELECT
@@ -105,8 +95,6 @@ export async function GET(request: Request) {
         AND ${chats.createdAt} <= ${endDateString}
         AND ${chats.rating} IS NOT NULL
     `);
-    
-    console.log('Ratings data:', ratingsData);
     
     const totalRated = Number(ratingsData[0]?.totalRated) || 0;
     const highRatings = Number(ratingsData[0]?.highRatings) || 0;
@@ -129,8 +117,6 @@ export async function GET(request: Request) {
       ORDER BY "startTime" DESC
       LIMIT 3
     `);
-    
-    console.log('Flagged conversations:', flaggedConversations);
     
     // Format the flagged conversations
     const flagged = flaggedConversations.map((convo: any) => {
@@ -164,8 +150,6 @@ export async function GET(request: Request) {
         AND ${chats.createdAt} < ${startDateString}
         AND ${chats.role} = 'user'
     `);
-    
-    console.log('Previous period data:', previousPeriodData);
     
     const previousConversations = Number(previousPeriodData[0]?.conversations) || 0;
     let growthRate = 0;

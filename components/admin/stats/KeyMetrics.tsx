@@ -56,13 +56,13 @@ interface KeyMetricsData {
   }>;
 }
 
-type TimeRange = '7' | '30' | '90' | 'all';
+type TimeRange = '14' | '30' | '90' | 'all';
 
 export default function KeyMetrics() {
   const [metrics, setMetrics] = useState<KeyMetricsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<TimeRange>('30');
+  const [timeRange, setTimeRange] = useState<TimeRange>('14');
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -96,25 +96,6 @@ export default function KeyMetrics() {
     return num.toLocaleString();
   };
 
-  // Helper to render a trend indicator
-  const renderTrend = (rate: number) => {
-    if (rate > 0) {
-      return (
-        <div className="flex items-center text-emerald-600">
-          <ArrowUpRight className="h-4 w-4 mr-1" />
-          <span>{Math.abs(rate)}% ↑</span>
-        </div>
-      );
-    } else if (rate < 0) {
-      return (
-        <div className="flex items-center text-rose-600">
-          <ArrowDownRight className="h-4 w-4 mr-1" />
-          <span>{Math.abs(rate)}% ↓</span>
-        </div>
-      );
-    }
-    return <span className="text-gray-500">No change</span>;
-  };
 
   // Skeleton loading component for metrics
   const MetricsSkeleton = () => (
@@ -136,32 +117,6 @@ export default function KeyMetrics() {
     </div>
   );
 
-  // Component for the satisfaction gauge
-  const SatisfactionGauge = ({ rate }: { rate: number }) => {
-    // Determine color based on satisfaction rate
-    let color = 'bg-rose-500';
-    if (rate >= 80) color = 'bg-emerald-500';
-    else if (rate >= 60) color = 'bg-lime-500';
-    else if (rate >= 40) color = 'bg-amber-500';
-    else if (rate >= 20) color = 'bg-orange-500';
-
-    return (
-      <div className="w-full mt-2">
-        <div className="flex justify-between text-xs mb-1">
-          <span>0%</span>
-          <span>50%</span>
-          <span>100%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div 
-            className={`h-2.5 rounded-full ${color}`} 
-            style={{ width: `${rate}%` }}
-          ></div>
-        </div>
-      </div>
-    );
-  };
-
   if (error) {
     return (
       <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-md">
@@ -181,7 +136,7 @@ export default function KeyMetrics() {
             <SelectValue placeholder="Time Period" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="14">Last 14 days</SelectItem>
             <SelectItem value="30">Last 30 days</SelectItem>
             <SelectItem value="90">Last 90 days</SelectItem>
             <SelectItem value="all">All time</SelectItem>
@@ -204,7 +159,7 @@ export default function KeyMetrics() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(metrics.engagement.activeUsers)}</div>
+                <div className="text-3xl font-bold">{formatNumber(metrics.engagement.activeUsers)}</div>
               </CardContent>
             </Card>
             
@@ -217,10 +172,7 @@ export default function KeyMetrics() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(metrics.engagement.totalConversations)}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {renderTrend(metrics.engagement.growthRate)}
-                </div>
+                <div className="text-3xl font-bold">{formatNumber(metrics.engagement.totalConversations)}</div>
               </CardContent>
             </Card>
             
@@ -233,7 +185,7 @@ export default function KeyMetrics() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics.engagement.messagesPerConversation}</div>
+                <div className="text-3xl font-bold">{metrics.engagement.messagesPerConversation}</div>
                 <div className="text-xs text-gray-500 mt-1">
                   Per conversation
                 </div>
@@ -249,8 +201,7 @@ export default function KeyMetrics() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics.satisfaction.satisfactionRate}%</div>
-                <SatisfactionGauge rate={metrics.satisfaction.satisfactionRate} />
+                <div className="text-3xl font-bold">{metrics.satisfaction.satisfactionRate}%</div>
                 <div className="text-xs text-gray-500 mt-2">
                   Based on {formatNumber(metrics.satisfaction.totalRated)} ratings
                 </div>
@@ -265,36 +216,26 @@ export default function KeyMetrics() {
               <CardHeader>
                 <div className="flex justify-between">
                   <CardTitle className="text-sm font-medium">Popular Topics</CardTitle>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <BadgeInfo className="h-4 w-4 text-gray-400" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs max-w-[200px]">
-                          These are the most common topics discussed in student conversations
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
                 </div>
               </CardHeader>
-              <CardContent>
+               <CardContent>
                 {metrics.topics.length > 0 ? (
                   <div className="space-y-4">
                     {metrics.topics.map((topic, idx) => (
                       <div key={idx} className="flex items-center justify-between">
                         <div className="flex items-center">
                           <span className="text-sm font-medium">{topic.name}</span>
+                        </div>
+                        <div className="flex items-center w-1/2">
+                          <div className="flex-grow bg-gray-200 rounded-full h-1.5 relative">
+                            <div 
+                              className="h-1.5 rounded-full bg-blue-500"
+                              style={{ width: `${(topic.count / metrics.topics[0].count) * 100}%` }}
+                            ></div>
+                          </div>
                           <Badge variant="outline" className="ml-2 text-xs">
                             {topic.count}
                           </Badge>
-                        </div>
-                        <div className="w-1/2 bg-gray-200 rounded-full h-1.5">
-                          <div 
-                            className="h-1.5 rounded-full bg-blue-500"
-                            style={{ width: `${(topic.count / metrics.topics[0].count) * 100}%` }}
-                          ></div>
                         </div>
                       </div>
                     ))}

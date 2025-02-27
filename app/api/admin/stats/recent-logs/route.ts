@@ -11,8 +11,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit') as string, 10) : 6;
     
-    console.log('Fetching recent logs with limit:', limit);
-    
     // Get recent conversations with their first message and metadata
     const recentConversations = await db.execute(sql`
       WITH ranked_chats AS (
@@ -36,8 +34,6 @@ export async function GET(request: Request) {
       ORDER BY "createdAt" DESC
       LIMIT ${limit}
     `);
-    
-    console.log('Recent conversations query result:', recentConversations);
     
     // Format the results
     const logs = recentConversations.map((log: any) => {
@@ -63,8 +59,6 @@ export async function GET(request: Request) {
         rating: log.rating // Keep as string 'up' or 'down'
       };
     });
-    
-    console.log('Formatted logs:', logs);
     
     return NextResponse.json({ logs });
   } catch (error) {
