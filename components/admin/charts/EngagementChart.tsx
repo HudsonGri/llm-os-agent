@@ -31,7 +31,7 @@ interface EngagementData {
   messages: number;
 }
 
-type DateRange = '14' | '30' | 'all';
+type DateRange = '7' | '14' | '30' | 'all';
 
 export default function EngagementChart() {
   const [data, setData] = useState<EngagementData[]>([]);
@@ -39,7 +39,7 @@ export default function EngagementChart() {
   const [totalMessages, setTotalMessages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<DateRange>('14');
+  const [dateRange, setDateRange] = useState<DateRange>('7');
   
   useEffect(() => {
     const fetchData = async () => {
@@ -114,11 +114,11 @@ export default function EngagementChart() {
   };
 
   return (
-    <Card className="shadow-sm border-gray-200">
+    <Card className="shadow-sm border-gray-200 h-full">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Daily Engagement</CardTitle>
+            <CardTitle className="text-xl">Daily Engagement</CardTitle>
             <CardDescription>
               {dateRange === 'all' ? 'All time' : `Past ${dateRange} days of`} student activity
             </CardDescription>
@@ -128,6 +128,7 @@ export default function EngagementChart() {
               <SelectValue placeholder="Select range" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
               <SelectItem value="14">Last 14 days</SelectItem>
               <SelectItem value="30">Last 30 days</SelectItem>
               <SelectItem value="90">Last 90 days</SelectItem>
@@ -136,24 +137,24 @@ export default function EngagementChart() {
           </Select>
         </div>
       </CardHeader>
-      <CardContent className="px-1">
+      <CardContent className="px-1 flex-1">
         {loading ? (
-          <div className="h-[300px] w-full flex items-center justify-center">
+          <div className="h-[320px] w-full flex items-center justify-center bg-gray-50/50 rounded-md">
             <div className="text-gray-400">Loading chart data...</div>
           </div>
         ) : error ? (
-          <div className="h-[300px] w-full flex items-center justify-center">
-            <div className="text-red-500 text-center">
+          <div className="h-[320px] w-full flex items-center justify-center bg-rose-50/50 rounded-md">
+            <div className="text-rose-500 text-center">
               <p className="font-medium">Error loading chart</p>
               <p className="text-sm mt-1">{error}</p>
             </div>
           </div>
         ) : data.length === 0 ? (
-          <div className="h-[300px] w-full flex items-center justify-center">
+          <div className="h-[400px] w-full flex items-center justify-center bg-gray-50/50 rounded-md">
             <div className="text-gray-400">No data available</div>
           </div>
         ) : (
-          <div className="h-[300px] w-full">
+          <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid vertical={false} stroke="#eee" />
@@ -200,7 +201,7 @@ export default function EngagementChart() {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-2 pt-0 pb-4 text-sm">
+      <CardFooter className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-2 pt-2 pb-4 text-sm border-t border-gray-100">
         <div className="leading-none text-gray-600 flex items-center gap-2">
           Total of {totalConversations.toLocaleString()} conversations
           <TooltipProvider>

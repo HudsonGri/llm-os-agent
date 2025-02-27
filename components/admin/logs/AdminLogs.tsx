@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -53,6 +53,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { prism } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { useSearchParams } from 'next/navigation';
 
 // Define the shape of tool invocations
 interface ToolInvocation {
@@ -80,6 +81,11 @@ interface LogEntry {
 }
 
 export default function AdminLogs() {
+  // Add useSearchParams hook to get URL parameters
+  const searchParams = useSearchParams();
+  const targetConversationId = searchParams.get('id');
+  const targetLogRef = useRef<HTMLDivElement>(null);
+
   // State for logs and pagination
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,6 +104,24 @@ export default function AdminLogs() {
   // State for expanded log entries
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
 
+  // Effect to auto-set search if ID is provided in URL
+  useEffect(() => {
+    if (targetConversationId) {
+      // Clear any existing search first
+      setSearch('');
+      setAppliedSearch('');
+
+      // Don't use the general search field for conversation IDs
+      // Instead, we'll directly filter for the specific conversation in fetchLogs
+      
+      // Reset other filters to ensure the conversation appears
+      setRating('all');
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setPage(1);
+    }
+  }, [targetConversationId]);
+
   // Fetch logs from the API
   const fetchLogs = async () => {
     setLoading(true);
@@ -106,26 +130,36 @@ export default function AdminLogs() {
     try {
       // Build query parameters
       const params = new URLSearchParams();
-      params.append('limit', limit.toString());
-      params.append('offset', ((page - 1) * limit).toString());
       
-      if (appliedSearch) {
-        params.append('search', appliedSearch);
-      }
-      
-      if (startDate) {
-        params.append('startDate', startDate.toISOString());
-      }
-      
-      if (endDate) {
-        // Set time to end of day for end date
-        const endOfDay = new Date(endDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        params.append('endDate', endOfDay.toISOString());
-      }
-      
-      if (rating && rating !== 'all') {
-        params.append('rating', rating);
+      // If we have a target conversation ID from URL, use a specific filter for it
+      if (targetConversationId) {
+        params.append('conversationId', targetConversationId);
+        // Use a high limit to ensure we get it even if not on first page
+        params.append('limit', '50');
+        params.append('offset', '0');
+      } else {
+        // Normal filtering without a specific conversation ID
+        params.append('limit', limit.toString());
+        params.append('offset', ((page - 1) * limit).toString());
+        
+        if (appliedSearch) {
+          params.append('search', appliedSearch);
+        }
+        
+        if (startDate) {
+          params.append('startDate', startDate.toISOString());
+        }
+        
+        if (endDate) {
+          // Set time to end of day for end date
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          params.append('endDate', endOfDay.toISOString());
+        }
+        
+        if (rating && rating !== 'all') {
+          params.append('rating', rating);
+        }
       }
       
       // Fetch logs from API
@@ -136,20 +170,79 @@ export default function AdminLogs() {
       }
       
       const data = await response.json();
-      setLogs(data.logs);
-      setTotal(data.total);
+
+      // If we're looking for a specific conversation, filter the results to ensure it's included
+      if (targetConversationId && data.logs.length > 0) {
+        // Find the log that matches the conversation ID
+        const targetLog = data.logs.find(
+          (log: LogEntry) => log.conversationId === targetConversationId
+        );
+        
+        if (targetLog) {
+          setExpandedLog(targetLog.id);
+          
+          // Set the logs array to make sure the target appears first
+          const filteredLogs = [
+            targetLog, 
+            ...data.logs.filter((log: LogEntry) => log.id !== targetLog.id)
+          ].slice(0, limit);
+          
+          setLogs(filteredLogs);
+          setTotal(data.total);
+        } else {
+          // If no match in the current results, keep normal results
+          setLogs(data.logs);
+          setTotal(data.total);
+        }
+      } else {
+        // Normal case - just set the logs
+        setLogs(data.logs);
+        setTotal(data.total);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
       console.error('Error fetching logs:', err);
     } finally {
       setLoading(false);
+      
+      // After the data is loaded and rendered, scroll if we have a target
+      if (targetConversationId) {
+        // Add a delay to ensure DOM is fully updated before scrolling
+        setTimeout(() => {
+          // Use data-attribute to find the target element
+          const targetElement = document.querySelector(`[data-conversation-id="${targetConversationId}"]`);
+          if (targetElement) {
+            // Scroll with offset to ensure it's visible with a smoother animation
+            window.scrollTo({
+              top: targetElement.getBoundingClientRect().top + window.pageYOffset - 140,
+              behavior: 'smooth'
+            });
+            
+            // Focus the element for accessibility but remove animation
+            if (targetElement instanceof HTMLElement) {
+              targetElement.focus();
+            }
+          }
+        }, 300); // Delay to ensure everything is rendered
+      }
     }
   };
 
   // Initialize and refresh when pagination or filters change
   useEffect(() => {
-    fetchLogs();
+    // Don't trigger another fetch if we're loading with a target conversation ID
+    // since we handle that with a separate effect
+    if (!targetConversationId || !loading) {
+      fetchLogs();
+    }
   }, [page, appliedSearch, startDate, endDate, rating]);
+
+  // Add a separate effect to handle the initial load with a target conversation ID
+  useEffect(() => {
+    if (targetConversationId) {
+      fetchLogs();
+    }
+  }, [targetConversationId]);
 
   // Handle search form submission
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -210,14 +303,14 @@ export default function AdminLogs() {
       return (
         <Badge className="bg-green-100 text-green-800 hover:bg-green-100 flex items-center gap-1 py-1">
           <ThumbsUp size={14} />
-          <span>Response Liked</span>
+          <span>Liked</span>
         </Badge>
       );
     } else if (rating === 'down') {
       return (
         <Badge className="bg-red-100 text-red-800 hover:bg-red-100 flex items-center gap-1 py-1">
           <ThumbsDown size={14} />
-          <span>Response Disliked</span>
+          <span>Disliked</span>
         </Badge>
       );
     }
@@ -482,10 +575,18 @@ export default function AdminLogs() {
             // Logs list
             <div className="space-y-4">
               {logs.map((log) => (
-                <Card key={log.id} className={cn(
-                  "border overflow-hidden transition-all duration-200 hover:border-gray-300 hover:shadow-sm",
-                  expandedLog === log.id ? "border-gray-300 shadow-sm" : "border-gray-200"
-                )}>
+                <Card 
+                  key={log.id} 
+                  ref={log.conversationId === targetConversationId ? targetLogRef : undefined}
+                  className={cn(
+                    "border overflow-hidden transition-all duration-300",
+                    expandedLog === log.id ? "border-blue-300 shadow-sm ring-1 ring-blue-200" : "border-gray-200 hover:border-gray-300 hover:shadow-sm", 
+                    log.conversationId === targetConversationId ? "bg-blue-50 shadow-md" : "",
+                    log.rating === 'up' ? "border-l-4 border-l-green-400" : log.rating === 'down' ? "border-l-4 border-l-red-400" : ""
+                  )}
+                  data-conversation-id={log.conversationId}
+                  tabIndex={log.conversationId === targetConversationId ? 0 : undefined}
+                >
                   <div 
                     className={cn(
                       "flex justify-between items-start p-4 cursor-pointer",
@@ -520,12 +621,12 @@ export default function AdminLogs() {
                             {log.rating === 'up' ? (
                               <Badge variant="outline" className="bg-green-50 border-green-200 text-green-800 flex items-center gap-1 py-0.5">
                                 <ThumbsUp size={12} />
-                                <span className="text-xs">Response rated</span>
+                                <span className="text-xs font-medium">Liked</span>
                               </Badge>
                             ) : (
                               <Badge variant="outline" className="bg-red-50 border-red-200 text-red-800 flex items-center gap-1 py-0.5">
                                 <ThumbsDown size={12} />
-                                <span className="text-xs">Response rated</span>
+                                <span className="text-xs font-medium">Disliked</span>
                               </Badge>
                             )}
                           </div>
@@ -535,17 +636,58 @@ export default function AdminLogs() {
                         {log.query}
                       </p>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="rounded-full h-8 w-8 ml-2 flex-shrink-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                    >
-                      {expandedLog === log.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {log.rating && (
+                        <div className={cn(
+                          "h-8 w-8 rounded-full flex items-center justify-center",
+                          log.rating === 'up' ? "bg-green-100" : "bg-red-100"
+                        )}>
+                          {log.rating === 'up' ? 
+                            <ThumbsUp size={16} className="text-green-600" /> : 
+                            <ThumbsDown size={16} className="text-red-600" />
+                          }
+                        </div>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="rounded-full h-8 w-8 flex-shrink-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                      >
+                        {expandedLog === log.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      </Button>
+                    </div>
                   </div>
                   
                   {expandedLog === log.id && (
                     <div className="p-5 bg-white border-t border-gray-100">
+                      {log.rating && (
+                        <div className={cn(
+                          "mb-4 p-2 rounded-md flex items-center gap-2",
+                          log.rating === 'up' 
+                            ? "bg-green-50 border border-green-200 text-green-800" 
+                            : "bg-red-50 border border-red-200 text-red-800"
+                        )}>
+                          <div className={cn(
+                            "h-8 w-8 rounded-full flex items-center justify-center",
+                            log.rating === 'up' ? "bg-green-100" : "bg-red-100"
+                          )}>
+                            {log.rating === 'up' ? 
+                              <ThumbsUp size={18} className="text-green-600" /> : 
+                              <ThumbsDown size={18} className="text-red-600" />
+                            }
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              This response was {log.rating === 'up' ? 'liked' : 'disliked'} by the user
+                            </p>
+                            <p className="text-sm opacity-80">
+                              {log.rating === 'up' 
+                                ? 'The user found this response helpful or satisfactory.' 
+                                : 'The user found this response unhelpful or unsatisfactory.'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <div className="mb-6">
                         <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-1.5">
                           <span className="inline-block h-2 w-2 rounded-full bg-blue-500 mr-1"></span>
@@ -560,10 +702,20 @@ export default function AdminLogs() {
                         <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-1.5">
                           <span className="inline-block h-2 w-2 rounded-full bg-green-500 mr-1"></span>
                           Assistant Response
+                          {log.rating && (
+                            <Badge 
+                              className={cn(
+                                "ml-2 py-1 px-2 flex items-center gap-1",
+                                log.rating === 'up' 
+                                  ? "bg-green-100 text-green-800 border-green-200" 
+                                  : "bg-red-100 text-red-800 border-red-200"
+                              )}
+                            >
+                              {log.rating === 'up' ? <ThumbsUp size={12} /> : <ThumbsDown size={12} />}
+                              <span className="font-medium">{log.rating === 'up' ? 'Liked' : 'Disliked'}</span>
+                            </Badge>
+                          )}
                         </h4>
-                        <div className="flex items-center gap-2 mb-2">
-                          {log.rating && renderRatingBadge(log.rating)}
-                        </div>
                         <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                           <p className="text-gray-700 text-sm whitespace-pre-wrap">{log.response}</p>
                         </div>
@@ -587,6 +739,9 @@ export default function AdminLogs() {
                           <p className="flex items-center gap-2">
                             <span className="font-medium text-gray-700">User ID:</span> {log.user}
                           </p>
+                          <p className="flex items-center gap-2">
+                            <span className="font-medium text-gray-700">Conversation ID:</span> {log.conversationId}
+                          </p>
                           {log.topic && (
                             <p className="flex items-center gap-2">
                               <span className="font-medium text-gray-700">Topic:</span>
@@ -604,11 +759,20 @@ export default function AdminLogs() {
                           {log.rating && (
                             <p className="flex items-center gap-2">
                               <span className="font-medium text-gray-700">Rating:</span>
-                              {renderRatingIcon(log.rating)} 
-                              <span>{log.rating === 'up' ? 'Liked' : 'Disliked'}</span>
+                              <Badge 
+                                className={cn(
+                                  "py-1 px-2 flex items-center gap-1",
+                                  log.rating === 'up' 
+                                    ? "bg-green-100 text-green-800 border-green-200" 
+                                    : "bg-red-100 text-red-800 border-red-200"
+                                )}
+                              >
+                                {renderRatingIcon(log.rating)} 
+                                <span className="font-medium">{log.rating === 'up' ? 'Liked' : 'Disliked'}</span>
+                              </Badge>
                             </p>
-        )}
-      </div>
+                          )}
+                        </div>
                         <div>
                           <Link 
                             href={`/chat/${log.conversationId}`} 

@@ -13,7 +13,8 @@ import {
   BadgeInfo,
   Search,
   Star,
-  ThumbsDown
+  ThumbsDown,
+  ExternalLink
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 // Define TypeScript interfaces for our data
 interface KeyMetricsData {
@@ -56,13 +58,13 @@ interface KeyMetricsData {
   }>;
 }
 
-type TimeRange = '14' | '30' | '90' | 'all';
+type TimeRange = '7' | '30' | '90' | 'all';
 
 export default function KeyMetrics() {
   const [metrics, setMetrics] = useState<KeyMetricsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<TimeRange>('14');
+  const [timeRange, setTimeRange] = useState<TimeRange>('7');
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -99,44 +101,121 @@ export default function KeyMetrics() {
 
   // Skeleton loading component for metrics
   const MetricsSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <Card key={i} className="shadow-sm border-gray-200">
-          <CardHeader className="pb-2">
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-1/2 mt-2" />
+    <div className="space-y-6 flex-1 flex flex-col">
+      {/* Primary Metrics Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="shadow-sm border-gray-200">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4 rounded-full" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-9 w-16 mb-1" />
+              {i === 3 && <Skeleton className="h-3 w-24 mt-2" />}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      {/* Secondary Metrics Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Top Topics Skeleton */}
+        <Card className="shadow-sm border-gray-200 md:col-span-2">
+          <CardHeader>
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-32" />
+            </div>
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-8 w-1/3" />
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-24" />
+                  <div className="flex items-center w-1/2">
+                    <Skeleton className="h-1.5 w-full rounded-full" />
+                    <Skeleton className="h-5 w-10 ml-2" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
-          <CardFooter>
-            <Skeleton className="h-4 w-1/3" />
+          <CardFooter className="pt-0">
+            <Skeleton className="h-3 w-40" />
           </CardFooter>
         </Card>
-      ))}
+        
+        {/* Flagged Conversations Skeleton */}
+        <Card className="shadow-sm border-gray-200">
+          <CardHeader>
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-4 rounded-full" />
+            </div>
+            <Skeleton className="h-3 w-36 mt-1" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-start space-x-3">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <div>
+                    <Skeleton className="h-4 w-28 mb-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter className="pt-0">
+            <Skeleton className="h-8 w-full rounded-md" />
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 
   if (error) {
     return (
-      <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-md">
-        <p className="font-medium">Unable to load key metrics</p>
-        <p className="text-sm mt-1">{error}</p>
+      <div className="h-full flex flex-col">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-bold tracking-tight">Key Metrics</h2>
+          
+          <Select value={timeRange} onValueChange={(value) => setTimeRange(value as TimeRange)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Time Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="all">All time</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1 bg-rose-50/50 flex items-center justify-center rounded-md min-h-[320px]">
+          <div className="text-rose-700 text-center p-4">
+            <p className="font-medium">Unable to load key metrics</p>
+            <p className="text-sm mt-1">{error}</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-full flex flex-col">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold tracking-tight">Key Metrics</h2>
+        <h2 className="text-xl font-bold tracking-tight">Key Metrics</h2>
         
         <Select value={timeRange} onValueChange={(value) => setTimeRange(value as TimeRange)}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Time Period" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="14">Last 14 days</SelectItem>
+            <SelectItem value="7">Last 7 days</SelectItem>
             <SelectItem value="30">Last 30 days</SelectItem>
             <SelectItem value="90">Last 90 days</SelectItem>
             <SelectItem value="all">All time</SelectItem>
@@ -147,7 +226,7 @@ export default function KeyMetrics() {
       {loading ? (
         <MetricsSkeleton />
       ) : metrics ? (
-        <div className="space-y-6">
+        <div className="space-y-6 flex-1 flex flex-col">
           {/* Primary Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Active Users */}
@@ -260,40 +339,41 @@ export default function KeyMetrics() {
             <Card className="shadow-sm border-gray-200">
               <CardHeader>
                 <div className="flex justify-between">
-                  <CardTitle className="text-sm font-medium">Flagged Conversations</CardTitle>
+                  <CardTitle className="text-sm font-medium">Disliked Messages</CardTitle>
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
                 </div>
-                <CardDescription>Recent low-rated interactions</CardDescription>
+                <CardDescription>Recent negatively rated responses</CardDescription>
               </CardHeader>
               <CardContent>
                 {metrics.flagged.length > 0 ? (
                   <div className="space-y-3">
                     {metrics.flagged.map((convo) => (
-                      <div key={convo.id} className="flex items-start space-x-3">
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-700 text-xs font-medium">
-                          <ThumbsDown className="h-4 w-4" />
+                      <Link 
+                        key={convo.id} 
+                        href={`/admin/logs?id=${convo.id}`}
+                        className="block group"
+                      >
+                        <div className="flex items-start space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer relative">
+                          <div className="absolute top-2 right-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ExternalLink className="h-3 w-3" />
+                          </div>
+                          <div className="h-8 w-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-700 text-xs font-medium">
+                            <ThumbsDown className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 pr-4">
+                            <div className="text-sm font-medium line-clamp-1 group-hover:text-blue-600 transition-colors">{convo.topic}</div>
+                            <div className="text-xs text-gray-500">{convo.date}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium line-clamp-1">{convo.topic}</div>
-                          <div className="text-xs text-gray-500">{convo.date}</div>
-                        </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (
                   <div className="text-sm text-center py-4 text-emerald-600">
-                    No low-rated conversations!
+                    No disliked messages!
                   </div>
                 )}
               </CardContent>
-              {metrics.flagged.length > 0 && (
-                <CardFooter className="pt-0">
-                  <Button variant="outline" size="sm" className="w-full text-xs">
-                    <Search className="h-3 w-3 mr-1" />
-                    View in Admin Logs
-                  </Button>
-                </CardFooter>
-              )}
             </Card>
           </div>
         </div>
