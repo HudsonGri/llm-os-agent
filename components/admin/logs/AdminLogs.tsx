@@ -288,7 +288,7 @@ export default function AdminLogs() {
             <form onSubmit={handleSearchSubmit} className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
+        <Input
                   placeholder="Search by user, query, or conversation ID..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -376,8 +376,8 @@ export default function AdminLogs() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
+      </div>
+
           {(appliedSearch || startDate || endDate || (rating && rating !== 'all')) && (
             <div className="mt-5 flex flex-wrap items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
               <div className="text-sm font-medium text-gray-700 mr-2">Active filters:</div>
@@ -607,8 +607,8 @@ export default function AdminLogs() {
                               {renderRatingIcon(log.rating)} 
                               <span>{log.rating === 'up' ? 'Liked' : 'Disliked'}</span>
                             </p>
-                          )}
-                        </div>
+        )}
+      </div>
                         <div>
                           <Link 
                             href={`/chat/${log.conversationId}`} 
