@@ -2,7 +2,7 @@ name: Re-ingest Updated Context
 
 on:
   schedule:
-    - cron: '25 21 * * *'  # Runs every day at 9:00 AM UTC (4:00 AM EST)
+    - cron: '28 21 * * *'  # Runs every day at 9:00 AM UTC (4:00 AM EST)
   workflow_dispatch:  # Allows manual trigger as well
 
 jobs:
@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+            ref: ingestion
 
       - name: Set up Python
         uses: actions/setup-python@v4
