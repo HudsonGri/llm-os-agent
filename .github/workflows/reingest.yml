@@ -3,7 +3,9 @@ name: Re-ingest Updated Context
 on:
   schedule:
     - cron: '0 9 * * *'  # Runs every day at 9:00 AM UTC (4:00 AM EST)
-  workflow_dispatch:  # Allows manual trigger as well
+  push:  # Allows manual trigger as well
+    branches:
+        - 'ingestion'
 
 jobs:
   run-python-script:
