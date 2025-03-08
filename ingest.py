@@ -52,7 +52,11 @@ CHUNKING_PROMPT = (
     "Surround the chunks with <chunk> </chunk> html tags."
 )
 
+# Set the token input limit to prevent cutoffs during the chunking process
 GEMINI_INPUT_LIMIT = 7300
+
+
+# --- Get Bytes from a file (for files from Canvas API) ---       
 
 def file_from_bytes(file):
     bytes = file.get_contents(binary=True)
@@ -223,6 +227,8 @@ def store_resource_and_embeddings(full_text: str, chunks: list, embeddings: list
             cur.close()
             conn.close()
 
+# --- Retrieve all ids for comparison with reingested files ---
+
 def get_all_resource_ids():
     try:
         conn = psycopg2.connect(DATABASE_URL)
@@ -243,6 +249,8 @@ def get_all_resource_ids():
             # Close the connection
             cur.close()
             conn.close()
+
+# --- Delete a Resource and its Corresponding Embeddings ---          
 
 def delete_file_from_index(file_id: int):
     try:
@@ -278,8 +286,6 @@ def main():
 
     # iterate through files in Canvas course
     for file in files:
-
-        
 
         # keep track of all current files in the canvas course
         file_ids.add(file.id)
