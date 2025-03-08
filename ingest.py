@@ -318,6 +318,11 @@ def main():
         print("File being ingested:", filename)
         print()
 
+        # eliminate null bytes:
+        if "\x00" in full_text:
+            print("Warning: Null byte detected in full_text!")
+            full_text = full_text.replace("\x00", "")
+
         # chunk text
         print("Chunking text with Gemini Flash 2.0 ...")
         chunks = chunk_text_with_gemini(full_text)
