@@ -1,0 +1,9 @@
+google-generativeai
+openai
+psycopg2
+PyPDF2
+python-pptx
+python-dotenv
+canvasapi
+psycopg2-binary
+tiktoken
