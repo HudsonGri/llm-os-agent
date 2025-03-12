@@ -56,7 +56,7 @@ export default function AdminSettings() {
           <option value="" hidden>
             Select retention duration...
           </option>
-          <option value="7days">7 days</option>
+          <option value="14days">14 days</option>
           <option value="30days">30 days</option>
           <option value="90days">90 days</option>
         </select>

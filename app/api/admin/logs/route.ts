@@ -14,6 +14,7 @@ export async function GET(request: Request) {
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
     const rating = searchParams.get('rating');
+    const conversationId = searchParams.get('conversationId');
 
     // Build query filters
     let filters = [];
@@ -40,19 +41,18 @@ export async function GET(request: Request) {
       filters.push(sql`${chats.createdAt} <= ${endDateParam}`);
     }
     
-    // Rating filter
-    if (rating) {
-      if (rating === 'up' || rating === 'down') {
-        filters.push(eq(chats.rating, rating));
-      } else if (rating === 'none') {
-        filters.push(sql`${chats.rating} IS NULL`);
-      }
+    // Conversation ID filter
+    if (conversationId) {
+      filters.push(eq(chats.conversationId, conversationId));
     }
     
     // Only fetch user queries (not system or assistant responses)
     filters.push(eq(chats.role, 'user'));
 
-    // Get total count for pagination
+    // For rating filter, we'll handle it differently since ratings are typically on assistant messages
+    // We'll first get all user messages without filtering by rating
+    
+    // Get total count for pagination (without rating filter)
     const [{ count }] = await db
       .select({ count: sql`count(*)`.mapWith(Number) })
       .from(chats)
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
       .offset(offset);
 
     // For each user message, get the corresponding assistant response
-    const logsWithResponses = await Promise.all(logs.map(async (log) => {
+    let logsWithResponses = await Promise.all(logs.map(async (log) => {
       // Ensure createdAt is a string for safe SQL comparison
       const createdAtStr = typeof log.createdAt === 'object' 
         ? log.createdAt.toISOString() 
@@ -95,6 +95,7 @@ export async function GET(request: Request) {
           createdAt: chats.createdAt,
           toolInvocations: chats.toolInvocations,
           topic: chats.topic,
+          rating: chats.rating,
         })
         .from(chats)
         .where(
@@ -147,13 +148,25 @@ export async function GET(request: Request) {
         // Include tool invocations data
         userToolInvocations: log.toolInvocations || [],
         assistantToolInvocations: response?.toolInvocations || [],
-        rating: log.rating,
+        rating: response?.rating || log.rating,
       };
     }));
 
+    // Apply rating filter after we have the assistant responses
+    if (rating && rating !== 'all') {
+      if (rating === 'up' || rating === 'down') {
+        logsWithResponses = logsWithResponses.filter(log => log.rating === rating);
+      } else if (rating === 'none') {
+        logsWithResponses = logsWithResponses.filter(log => !log.rating);
+      }
+    }
+
+    // Update the count if we applied a rating filter
+    const filteredCount = rating && rating !== 'all' ? logsWithResponses.length : count;
+
     return NextResponse.json({
       logs: logsWithResponses,
-      total: count,
+      total: filteredCount,
       limit,
       offset,
     });
