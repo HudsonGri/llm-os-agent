@@ -31,6 +31,7 @@ export async function GET(request: Request) {
         id: msg.id,
         role: msg.role,
         content: msg.content,
+        rating: msg.rating,
         toolInvocations: msg.toolInvocations || [],
       }));
 

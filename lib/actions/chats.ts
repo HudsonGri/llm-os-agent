@@ -68,6 +68,7 @@ export async function createChatMessage(data: NewChat): Promise<Chat> {
   try {
     const [chat] = await db.insert(chats)
       .values({
+        id: data.id,
         conversationId: data.conversationId,
         role: data.role,
         content: data.content,

@@ -9,10 +9,11 @@ interface MessageRatingProps {
   isComplete?: boolean;
   onRegenerate?: () => void;
   content?: string;
+  initialRating?: 'up' | 'down' | null;
 }
 
-export function MessageRating({ messageId, isComplete = true, onRegenerate, content }: MessageRatingProps) {
-  const [rating, setRating] = useState<'up' | 'down' | null>(null);
+export function MessageRating({ messageId, isComplete = true, onRegenerate, content, initialRating }: MessageRatingProps) {
+  const [rating, setRating] = useState<'up' | 'down' | null>(initialRating || null);
   const [copied, setCopied] = useState(false);
 
   if (!isComplete) return null;
@@ -32,6 +33,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
     
     try {
       await updateChatRating(messageId, finalRating);
+      console.log('Rating messageId:', messageId, 'finalRating:', finalRating);
     } catch (error) {
       console.error('Failed to update rating:', error);
       // Revert UI state if save fails
@@ -80,7 +82,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
           <span className="sr-only">Thumbs down</span>
         </Button>
       </motion.div>
-      <Button
+      {/* <Button
         variant="ghost"
         size="icon"
         className="h-7 w-7 rounded-md text-zinc-400 hover:text-zinc-900 transition-colors cursor-pointer"
@@ -88,7 +90,7 @@ export function MessageRating({ messageId, isComplete = true, onRegenerate, cont
       >
         <RotateCcw className="h-4 w-4" />
         <span className="sr-only">Regenerate response</span>
-      </Button>
+      </Button> */}
       <Button
         variant="ghost"
         size="icon"

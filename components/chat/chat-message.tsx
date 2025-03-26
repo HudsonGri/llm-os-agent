@@ -15,6 +15,7 @@ interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system' | 'data';
   content: string;
+  rating?: 'up' | 'down' | null;
   toolInvocations?: Array<{
     toolName: string;
     result?: {
@@ -99,6 +100,7 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                         isComplete={isComplete}
                         onRegenerate={onRegenerate}
                         content={m.content}
+                        initialRating={m.rating}
                       />
                     </div>
                   )}
