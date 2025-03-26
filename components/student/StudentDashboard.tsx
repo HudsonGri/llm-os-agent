@@ -1,27 +1,39 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ChatHistory } from '@/components/chat/chat-history';
 
 export default function StudentDashboard() {
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [userMessageCache, setUserMessageCache] = useState<Record<string, string>>({});
 
-  // TODO: fetch chat history from DB
-  // hard-coded for now
-  const chatHistory = [
-    { id: 1, question: 'What is an operating system?' },
-    { id: 2, question: 'What is IPv6?' },
-    { id: 3, question: 'What are scheduling algorithms?' },
-    { id: 4, question: 'What are race conditions?' },
-    { id: 5, question: 'Explain the Dining Philosophers problem.' },
-    { id: 6, question: 'How do you determine if a deadlock will occur?' },
-  ];
+  const handleSelectConversation = useCallback((id: string) => {
+    document.cookie = `conversationId=${id}; Path=/`;
+    setConversationId(id);
+    router.push('/');
+  }, [router]);
 
-  // TODO: algorithmically determine recommended study topics based on existing chat history
-  // possibly recommend based on current project/exercise, upcoming quiz/exam
-  // hard-coded for now
+  const handleNewChat = () => {
+    setConversationId(null);
+    router.push('/');
+  };
+
+  const handleConceptChat = useCallback((topic: string) => {
+    const prompt = `Please give an overview of ${topic}, provide relevant course resources, and 3 sample questions about ${topic}.`;
+    const newId = crypto.randomUUID();
+    document.cookie = `conversationId=${newId}; Path=/`;
+    document.cookie = `samplePrompt=${encodeURIComponent(prompt)}; Path=/`;
+    setConversationId(newId);
+    router.push('/');
+  }, [router]);
+
+  // Hard-coded recommended topics (can be updated later)
   const recommendedTopics = [
     'IO Devices',
     'File Systems',
@@ -31,47 +43,21 @@ export default function StudentDashboard() {
     'OS Fundamentals',
   ];
 
-  // Filter chat history by search query
-  const filteredHistory = chatHistory.filter((chat) =>
-    chat.question.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="flex flex-col min-h-screen">
       <div className="bg-gray-800 text-white p-4">
         <h1 className="text-xl font-semibold">Student Dashboard</h1>
       </div>
 
-      <div className="p-4 bg-gray-100 border-b border-gray-200">
-        <Input
-          placeholder="Search queries..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full md:w-1/2"
-        />
-      </div>
-
       <div className="flex-1 p-4 flex flex-col md:flex-row gap-4">
         <div className="flex flex-col w-full md:w-1/2 bg-white border border-gray-300">
           <h2 className="bg-gray-200 p-2 font-semibold">Chat History</h2>
-          <div>
-            {filteredHistory.map((item) => (
-              <div
-                key={item.id}
-                className="p-2 border-b border-gray-200 text-sm hover:bg-gray-50"
-              >
-                {item.question}
-              </div>
-            ))}
-            {filteredHistory.length === 0 && (
-              <div className="p-2 text-gray-500">No matching chats found.</div>
-            )}
-          </div>
-          <div className="p-2">
-            <Link href="/">
-              <Button className="mt-2">Start a New Chat</Button>
-            </Link>
-          </div>
+          <ChatHistory
+            currentConversationId={conversationId}
+            onSelectConversation={handleSelectConversation}
+            onNewChat={handleNewChat}
+            userMessageCache={userMessageCache}
+          />
         </div>
 
         <div className="flex flex-col w-full md:w-1/2 bg-white border border-gray-300">
@@ -83,12 +69,14 @@ export default function StudentDashboard() {
           </div>
           <div className="p-4 flex flex-wrap gap-2">
             {recommendedTopics.map((topic) => (
-              <div
+              <Button
                 key={topic}
+                variant="outline"
+                onClick={() => handleConceptChat(topic)}
                 className="bg-gray-100 p-2 border text-sm"
               >
                 {topic}
-              </div>
+              </Button>
             ))}
           </div>
         </div>

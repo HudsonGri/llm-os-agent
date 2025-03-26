@@ -36,9 +36,9 @@ function ErrorMessageComponent({ message, onRetry }: { message: string, onRetry:
         <div className="border border-red-100 bg-red-50 rounded-xl p-4 mr-12 break-words w-full max-w-3xl">
           <div className="text-zinc-600">{message}</div>
           <div className="mt-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-2"
               onClick={onRetry}
             >
@@ -92,9 +92,9 @@ export default function Chat() {
           if (!response.ok) {
             throw new Error(`Failed to load conversations: ${response.status}`);
           }
-          
+
           const conversations = await response.json();
-          
+
           if (conversations.length > 0) {
             // Set the most recent conversation
             const mostRecentId = conversations[0].id;
@@ -120,13 +120,13 @@ export default function Chat() {
     async function loadConversationHistory() {
       setIsLoadingHistory(true);
       setErrorMessage(null); // Clear any previous errors
-      
+
       try {
         const response = await fetch(`/api/chat/history?conversationId=${conversationId}`);
         if (!response.ok) {
           throw new Error(`Failed to load chat history: ${response.status}`);
         }
-        
+
         setInitialMessages(await response.json());
       } catch (error) {
         console.error('Error loading chat history:', error);
@@ -167,14 +167,14 @@ export default function Chat() {
   const handleSubmitWithHistoryReload = useCallback((e: React.FormEvent) => {
     // Clear any previous error
     setErrorMessage(null);
-    
+
     // Store the user message before submitting
     const userMessage = input.trim();
     if (!userMessage) return;
-    
+
     // Submit the message
     handleSubmit(e);
-    
+
     // Store user message in the cache for immediate display
     if (conversationId) {
       setUserMessageCache(prev => ({
@@ -182,12 +182,12 @@ export default function Chat() {
         [conversationId]: userMessage
       }));
     }
-    
+
     // Handle first message in a conversation
     if (messages.length === 0 && reloadChatHistory) {
       // Reload to ensure the chat appears in history
       reloadChatHistory(true);
-      
+
       // Then reload again after a short delay
       setTimeout(() => reloadChatHistory(true), 1000);
     }
@@ -195,14 +195,14 @@ export default function Chat() {
 
   const handleNewChat = useCallback(() => {
     const newId = createNewConversation();
-    
+
     // Clear any existing cached messages for this new ID
     setUserMessageCache(prev => {
       const updated = { ...prev };
       delete updated[newId];
       return updated;
     });
-    
+
     setInitialMessages([]);
   }, [createNewConversation]);
 
@@ -218,7 +218,7 @@ export default function Chat() {
     // Set input and prepare submission
     handleInputChange({ target: { value: question } } as React.ChangeEvent<HTMLInputElement>);
     const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-    
+
     // Cache the question
     if (conversationId) {
       setUserMessageCache(prev => ({
@@ -226,7 +226,7 @@ export default function Chat() {
         [conversationId]: question
       }));
     }
-    
+
     // Different handling for first message vs follow-up
     if (messages.length === 0 && reloadChatHistory) {
       handleSubmit(fakeEvent);
@@ -242,9 +242,20 @@ export default function Chat() {
     setReloadChatHistory(() => reloadFn);
   }, []);
 
+  useEffect(() => {
+    if (conversationId && messages.length === 0) {
+      const match = document.cookie.match(new RegExp('(^| )samplePrompt=([^;]+)'));
+      if (match) {
+        const samplePrompt = decodeURIComponent(match[2]);
+        handleInputChange({ target: { value: samplePrompt } } as React.ChangeEvent<HTMLInputElement>);
+        document.cookie = "samplePrompt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/;";
+      }
+    }
+  }, [conversationId, messages.length, handleInputChange]);
+
   // Check if we should show the error message in the chat
   const shouldShowErrorInChat = errorMessage && messages.length > 0 && messages[messages.length - 1].role === 'user';
-  
+
   // Check if we should show the loading indicator
   const shouldShowLoading = isLoading && messages[messages.length - 1]?.role === 'user' && !errorMessage;
 
@@ -270,7 +281,7 @@ export default function Chat() {
                   variant="empty"
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 gap-3 mt-8">
                 {sampleQuestions.map((question, index) => (
                   <Button
@@ -305,15 +316,15 @@ export default function Chat() {
                     />
                   );
                 })}
-                
+
                 {/* Show error message in the chat flow */}
                 {shouldShowErrorInChat && (
-                  <ErrorMessageComponent 
+                  <ErrorMessageComponent
                     message={errorMessage}
                     onRetry={handleRetry}
                   />
                 )}
-                
+
                 {/* Show loading indicator */}
                 {shouldShowLoading && (
                   <ChatMessage
