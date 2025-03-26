@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 
 export default function ConceptExplorer() {
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
 
   // TODO: fetch all (or subset) of possible topic tags and determine what clicking on these topics does
   // idea: general query such as "Give an overview of <topic> and provide relevant course materials"
@@ -29,6 +31,14 @@ export default function ConceptExplorer() {
     topic.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleConceptSelect = useCallback((topic: string) => {
+    const prompt = `Please give an overview of ${topic}, provide relevant course resources, and 3 sample questions about ${topic}.`;
+    const newId = crypto.randomUUID();
+    document.cookie = `conversationId=${newId}; Path=/`;
+    document.cookie = `samplePrompt=${encodeURIComponent(prompt)}; Path=/`;
+    router.push('/');
+  }, [router]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="bg-gray-800 text-white p-4 flex items-center gap-4">
@@ -48,7 +58,7 @@ export default function ConceptExplorer() {
       </div>
 
       <div className="p-4 bg-gray-50 border-b border-gray-200 text-gray-700">
-        Click on a topic below to view additional resources or course slides
+        Click on a topic below to start a new chat with an overview, relevant course resources, and sample questions.
       </div>
 
       <div className="flex-1 p-4">
@@ -56,6 +66,7 @@ export default function ConceptExplorer() {
           {filteredTopics.map((topic) => (
             <div
               key={topic}
+              onClick={() => handleConceptSelect(topic)}
               className="bg-white border border-gray-300 p-4 text-center hover:bg-gray-50 cursor-pointer"
             >
               {topic}

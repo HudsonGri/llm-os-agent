@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useCallback, useState} from 'react';
+import React, { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
@@ -24,9 +24,16 @@ export default function StudentDashboard() {
     router.push('/');
   };
 
-  // TODO: algorithmically determine recommended study topics based on existing chat history
-  // idea: recommend based on current project/exercise, upcoming quiz/exam (time) or related topics (semantic)
-  // hard-coded for now
+  const handleConceptChat = useCallback((topic: string) => {
+    const prompt = `Please give an overview of ${topic}, provide relevant course resources, and 3 sample questions about ${topic}.`;
+    const newId = crypto.randomUUID();
+    document.cookie = `conversationId=${newId}; Path=/`;
+    document.cookie = `samplePrompt=${encodeURIComponent(prompt)}; Path=/`;
+    setConversationId(newId);
+    router.push('/');
+  }, [router]);
+
+  // Hard-coded recommended topics (can be updated later)
   const recommendedTopics = [
     'IO Devices',
     'File Systems',
@@ -40,15 +47,6 @@ export default function StudentDashboard() {
     <div className="flex flex-col min-h-screen">
       <div className="bg-gray-800 text-white p-4">
         <h1 className="text-xl font-semibold">Student Dashboard</h1>
-      </div>
-
-      <div className="p-4 bg-gray-100 border-b border-gray-200">
-        <Input
-          placeholder="Search queries..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full md:w-1/2"
-        />
       </div>
 
       <div className="flex-1 p-4 flex flex-col md:flex-row gap-4">
@@ -71,12 +69,14 @@ export default function StudentDashboard() {
           </div>
           <div className="p-4 flex flex-wrap gap-2">
             {recommendedTopics.map((topic) => (
-              <div
+              <Button
                 key={topic}
+                variant="outline"
+                onClick={() => handleConceptChat(topic)}
                 className="bg-gray-100 p-2 border text-sm"
               >
                 {topic}
-              </div>
+              </Button>
             ))}
           </div>
         </div>
