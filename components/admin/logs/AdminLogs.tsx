@@ -60,6 +60,11 @@ interface ToolInvocation {
   toolName: string;
   state?: string;
   result?: any;
+  args: {
+    question: string;
+    topic: string;
+    topicNumber?: number;
+  };
   parts?: Array<{
     toolInvocation: any;
   }>;
@@ -327,13 +332,22 @@ export default function AdminLogs() {
       <div className="space-y-4">
         {toolInvocations.map((tool, index) => (
           <div key={index} className="bg-gray-100 p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Wrench size={16}  />
-              <span className="font-medium">{tool.toolName}</span>
-              {tool.state && (
-                <Badge variant="outline" className="ml-auto px-2 py-0.5">
-                  {tool.state}
+            <div className="flex flex-col gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Wrench size={16} />
+                <span className="font-medium">{tool.toolName}</span>
+                {tool.state && (
+                  <Badge variant="outline" className="ml-auto px-2 py-0.5">
+                    {tool.state}
+                  </Badge>
+                )}
+              </div>
+              {tool.args.topic && (
+              <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                <Badge variant="secondary" className="bg-gray-100 border-gray-200">
+                  Topic: {tool.args.topic} {tool.args.topicNumber && `#${tool.args.topicNumber}`}
                 </Badge>
+              </div>
               )}
             </div>
             {tool.result && (

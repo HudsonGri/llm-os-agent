@@ -18,6 +18,7 @@ export const resources = pgTable("resources", {
   updatedAt: timestamp("updated_at")
     .notNull()
     .default(sql`now()`),
+  filepath: text("filepath"),
 });
 
 // Schema for resources - used to validate API requests
