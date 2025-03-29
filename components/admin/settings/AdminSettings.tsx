@@ -24,7 +24,12 @@ export default function AdminSettings() {
 
   return (
     <div className="flex-1 p-4 flex flex-col gap-4">
-      <div className="bg-white border border-gray-300 p-4">
+      <div className="bg-gray-100 border border-gray-300 p-8 rounded-md text-center">
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">Coming Soon</h2>
+        <p className="text-gray-600">Admin settings features are currently under development and will be available soon.</p>
+      </div>
+      
+      <div className="bg-white border border-gray-300 p-4 opacity-50 pointer-events-none">
         <h2 className="font-semibold mb-2">Model Behavior Settings</h2>
         <select
           value={model}
@@ -46,7 +51,7 @@ export default function AdminSettings() {
         />
       </div>
 
-      <div className="bg-white border border-gray-300 p-4">
+      <div className="bg-white border border-gray-300 p-4 opacity-50 pointer-events-none">
         <h2 className="font-semibold mb-2">Chat History Retention</h2>
         <select
           value={retention}
@@ -62,7 +67,7 @@ export default function AdminSettings() {
         </select>
       </div>
 
-      <div className="bg-white border border-gray-300 p-4">
+      <div className="bg-white border border-gray-300 p-4 opacity-50 pointer-events-none">
         <h2 className="font-semibold mb-2">API & Ingestion Settings</h2>
         <label className="block mb-2">Canvas API Key</label>
         <Input

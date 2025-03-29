@@ -28,6 +28,7 @@ const TOPICS = [
   "Exercise 9",
   "Networking",
   "Project 1",
+  "Project 2",
   "Deadlock",
   "Project 3",
   "Security",

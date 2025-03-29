@@ -97,7 +97,7 @@ export default function AdminLogs() {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(15);
   
   // State for filters
   const [search, setSearch] = useState('');
@@ -292,15 +292,6 @@ export default function AdminLogs() {
     setExpandedLog(expandedLog === id ? null : id);
   };
 
-  // Display rating icon
-  const renderRatingIcon = (rating?: 'up' | 'down' | null) => {
-    if (rating === 'up') {
-      return <ThumbsUp size={16} className="text-green-500" />;
-    } else if (rating === 'down') {
-      return <ThumbsDown size={16} className="text-red-500" />;
-    }
-    return null;
-  };
 
   // Display rating badge
   const renderRatingBadge = (rating?: 'up' | 'down' | null) => {
@@ -625,7 +616,7 @@ export default function AdminLogs() {
                           </Badge>
                         )}
                         {log.assistantToolInvocations && log.assistantToolInvocations.length > 0 && (
-                          <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-none">
+                          <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700 font-medium py-1 px-2.5 flex items-center gap-1">
                             <Wrench size={12} className="mr-1" />
                             {log.assistantToolInvocations.length} {log.assistantToolInvocations.length === 1 ? 'tool' : 'tools'}
                           </Badge>
@@ -651,17 +642,6 @@ export default function AdminLogs() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {log.rating && (
-                        <div className={cn(
-                          "h-8 w-8 rounded-full flex items-center justify-center",
-                          log.rating === 'up' ? "bg-green-100" : "bg-red-100"
-                        )}>
-                          {log.rating === 'up' ? 
-                            <ThumbsUp size={16} className="text-green-600" /> : 
-                            <ThumbsDown size={16} className="text-red-600" />
-                          }
-                        </div>
-                      )}
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -674,34 +654,6 @@ export default function AdminLogs() {
                   
                   {expandedLog === log.id && (
                     <div className="p-5 bg-white border-t border-gray-100">
-                      {log.rating && (
-                        <div className={cn(
-                          "mb-4 p-2 rounded-md flex items-center gap-2",
-                          log.rating === 'up' 
-                            ? "bg-green-50 border border-green-200 text-green-800" 
-                            : "bg-red-50 border border-red-200 text-red-800"
-                        )}>
-                          <div className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center",
-                            log.rating === 'up' ? "bg-green-100" : "bg-red-100"
-                          )}>
-                            {log.rating === 'up' ? 
-                              <ThumbsUp size={18} className="text-green-600" /> : 
-                              <ThumbsDown size={18} className="text-red-600" />
-                            }
-                          </div>
-                          <div>
-                            <p className="font-medium">
-                              This response was {log.rating === 'up' ? 'liked' : 'disliked'} by the user
-                            </p>
-                            <p className="text-sm opacity-80">
-                              {log.rating === 'up' 
-                                ? 'The user found this response helpful or satisfactory.' 
-                                : 'The user found this response unhelpful or unsatisfactory.'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
                       <div className="mb-6">
                         <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-1.5">
                           <span className="inline-block h-2 w-2 rounded-full bg-blue-500 mr-1"></span>
@@ -767,7 +719,7 @@ export default function AdminLogs() {
                           {log.userAgent && (
                             <p className="flex items-center gap-2">
                               <span className="font-medium text-gray-700">User Agent:</span> 
-                              <span className="truncate max-w-[300px]">{log.userAgent.substring(0, 50)}...</span>
+                              <span className="truncate max-w-[400px]">{log.userAgent.substring(0, 100)}...</span>
                             </p>
                           )}
                           {log.rating && (
@@ -781,7 +733,6 @@ export default function AdminLogs() {
                                     : "bg-red-100 text-red-800 border-red-200"
                                 )}
                               >
-                                {renderRatingIcon(log.rating)} 
                                 <span className="font-medium">{log.rating === 'up' ? 'Liked' : 'Disliked'}</span>
                               </Badge>
                             </p>
@@ -789,8 +740,7 @@ export default function AdminLogs() {
                         </div>
                         <div>
                           <Link 
-                            href={`/chat/${log.conversationId}`} 
-                            target="_blank"
+                            href={`/admin/logs?id=${log.conversationId}`} 
                             className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-medium bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
                           >
                             View Conversation <ExternalLink size={14} />

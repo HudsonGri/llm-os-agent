@@ -12,11 +12,8 @@ import { Card } from '@/components/ui/card';
 export default function AdminDashboard() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <AdminHeader title="Instructor Dashboard" showBackArrow={false} />
+      <AdminHeader title="Admin Dashboard" showBackArrow={false} />
 
-      <div className="bg-gray-100 text-gray-700 px-4 py-2 font-medium border-b border-gray-200">
-        Student Engagement Analytics
-      </div>
 
       <div className="flex-1 p-4 md:p-6 space-y-6">
         {/* Dashboard Summary Section */}

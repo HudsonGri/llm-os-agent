@@ -297,9 +297,9 @@ export default function KeyMetrics() {
                   <CardTitle className="text-sm font-medium">Popular Topics</CardTitle>
                 </div>
               </CardHeader>
-               <CardContent>
+              <CardContent>
                 {metrics.topics.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-h-[200px] overflow-y-auto pr-2">
                     {metrics.topics.map((topic, idx) => (
                       <div key={idx} className="flex items-center justify-between">
                         <div className="flex items-center">
