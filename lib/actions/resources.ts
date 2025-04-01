@@ -6,7 +6,7 @@ import {
   resources,
 } from '@/lib/db/schema/resources';
 import { db } from '../db';
-import { generateEmbeddings } from '../ai/embedding';
+import { generateEmbedding } from '../ai/embedding';
 import { embeddings as embeddingsTable } from '../db/schema/embeddings';
 
 export const createResource = async (input: NewResourceParams) => {
@@ -18,13 +18,12 @@ export const createResource = async (input: NewResourceParams) => {
       .values({ content, filename, url })
       .returning();
 
-    const embeddings = await generateEmbeddings(content);
-    await db.insert(embeddingsTable).values(
-      embeddings.map(embedding => ({
-        resourceId: resource.id,
-        ...embedding,
-      })),
-    );
+    const embedding = await generateEmbedding(content);
+    await db.insert(embeddingsTable).values({
+      resourceId: resource.id,
+      content: content,
+      embedding: embedding,
+    });
 
     return 'Resource successfully created and embedded.';
   } catch (error) {

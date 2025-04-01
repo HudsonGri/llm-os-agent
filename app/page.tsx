@@ -230,7 +230,7 @@ export default function Chat() {
     { text: "What does a void pointer do?", icon: Sparkles },
     { text: "What do we need to submit for Project 2" , icon: File },
     { text: "What is the penalty for submitting assignments late?", icon: BookOpen },
-    { text: "What topics should I review for Excercise 6", icon: Calendar },
+    { text: "What topics should I review for Exercise 6", icon: Calendar },
   ];
 
   // Function for handling preset sample questions

@@ -126,11 +126,29 @@ export const findRelevantContent = async (
     }
   }
   
-  // Add source_number to each result based on its index in the array
-  const numberedResults = combinedResults.map((result, index) => ({
-    ...result,
-    source_number: index + 1
-  }));
+  // Create a map to track source numbers by filepath
+  const filepathSourceMap = new Map<string, number>();
+  let nextSourceNumber = 1;
+  
+  // Add source_number to each result based on filepath
+  const numberedResults = combinedResults.map(result => {
+    const filepath = result.filepath || '';
+    
+    // If this filepath already has a source number, use it
+    if (filepathSourceMap.has(filepath)) {
+      return {
+        ...result,
+        source_number: filepathSourceMap.get(filepath)
+      };
+    }
+    
+    // Otherwise, assign a new source number
+    filepathSourceMap.set(filepath, nextSourceNumber);
+    return {
+      ...result,
+      source_number: nextSourceNumber++
+    };
+  });
   
   return numberedResults;
 };

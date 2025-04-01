@@ -27,43 +27,35 @@ export async function GET(request: Request) {
       const messages = await getConversationMessages(conversationId);
       
       // Transform messages to match the AI SDK's format
-      const formattedMessages = messages.map(msg => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-        rating: msg.rating,
-        toolInvocations: msg.toolInvocations || [],
-      }));
+      const formattedMessages = messages.map(msg => {
+        // Ensure tool invocations have the required fields
+        const toolInvocations = msg.toolInvocations ? msg.toolInvocations.map((tool: any, index: number) => ({
+          toolName: tool.toolName || 'unknown',
+          toolCallId: tool.toolCallId || `call_${crypto.randomUUID().replace(/-/g, '')}`,
+          state: tool.state || 'result',
+          step: tool.step !== undefined ? tool.step : index,
+          args: tool.args || {},
+          result: tool.result
+        })) : [];
+
+        return {
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          rating: msg.rating,
+          toolInvocations: toolInvocations,
+        };
+      });
 
       return NextResponse.json(formattedMessages);
     } catch (error) {
-      console.error(`Error fetching chat history for conversation ${conversationId}:`, error);
-      
-      // Check if it's a "not found" error
-      if (error instanceof Error && error.message.includes('not found')) {
-        return NextResponse.json(
-          { error: 'Conversation not found' }, 
-          { status: 404 }
-        );
-      }
-      
-      // Database connection errors
-      if (error instanceof Error && 
-          (error.message.includes('database') || error.message.includes('connection'))) {
-        return NextResponse.json(
-          { error: 'Database connection error, please try again later' }, 
-          { status: 503 }
-        );
-      }
-      
-      // Default server error
+      console.error('Error getting conversation history:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch chat history', details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined }, 
+        { error: 'Failed to get conversation history' }, 
         { status: 500 }
       );
     }
   } catch (error) {
-    // Catch any errors in the URL parsing or other outer code
     console.error('Unhandled error in chat history API:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred' }, 

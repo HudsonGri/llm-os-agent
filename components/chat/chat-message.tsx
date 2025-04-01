@@ -11,6 +11,18 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
+// Match the SourceInfo interface from assistant.tsx
+interface SourceInfo {
+  name?: string;
+  filename?: string;
+  url?: string;
+  similarity?: number;
+  content?: string;
+  topic?: string;
+  filepath?: string;
+  source?: string;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system' | 'data';
@@ -18,19 +30,15 @@ interface Message {
   rating?: 'up' | 'down' | null;
   toolInvocations?: Array<{
     toolName: string;
-    result?: {
+    state?: string;
+    step?: number;
+    toolCallId?: string;
+    args?: {
+      question?: string;
       topic?: string;
-      similarity?: number;
-      name?: string;
-      filename?: string;
-      url?: string;
-    } | Array<{
-      topic?: string;
-      similarity: number;
-      name: string;
-      filename?: string;
-      url?: string;
-    }>;
+      topicNumber?: number;
+    };
+    result?: SourceInfo | Array<SourceInfo>;
   }>;
 }
 
@@ -91,7 +99,9 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                           content: m.content,
                           toolInvocations: m.toolInvocations?.map(t => ({
                             toolName: t.toolName,
-                            result: t.result
+                            result: Array.isArray(t.result) 
+                              ? t.result 
+                              : t.result ? [t.result as SourceInfo] : []
                           }))
                         }}
                       />
@@ -135,8 +145,10 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                           {extractSourceNumbers(m.content).map((sourceNum, index) => {
                             const sourceInfo = m.toolInvocations
                               ?.find(t => t.toolName === 'getInformation')
-                              ?.result as any[];
-                            const source = sourceInfo?.[sourceNum - 1];
+                              ?.result;
+                            
+                            const sources = Array.isArray(sourceInfo) ? sourceInfo : [sourceInfo].filter(Boolean);
+                            const source = sources[sourceNum - 1] as SourceInfo | undefined;
 
                             return (
                               <motion.div
@@ -177,7 +189,13 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                     {/* Similar Sources Section */}
                     {m.toolInvocations?.find(t => t.toolName === 'getInformation')?.result && (
                       <SimilarSources 
-                        sources={m.toolInvocations.find(t => t.toolName === 'getInformation')?.result as any[]} 
+                        sources={
+                          Array.isArray(m.toolInvocations.find(t => t.toolName === 'getInformation')?.result)
+                            ? m.toolInvocations.find(t => t.toolName === 'getInformation')?.result as SourceInfo[]
+                            : m.toolInvocations.find(t => t.toolName === 'getInformation')?.result
+                              ? [m.toolInvocations.find(t => t.toolName === 'getInformation')?.result as SourceInfo]
+                              : []
+                        } 
                         citedSourceNumbers={extractSourceNumbers(m.content)}
                       />
                     )}
@@ -193,12 +211,7 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
 }
 
 interface SimilarSourcesProps {
-  sources: Array<{
-    similarity: number;
-    filename?: string;
-    url?: string;
-    name?: string;
-  }>;
+  sources: SourceInfo[];
   citedSourceNumbers: number[];
 }
 
@@ -307,7 +320,7 @@ function SimilarSources({ sources, citedSourceNumbers }: SimilarSourcesProps) {
                       >
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-zinc-50 transition-colors">
                           <div className="flex-none text-xs font-medium text-zinc-500">
-                            {Math.round(source.similarity * 100)}%
+                            {Math.round((source.similarity || 0) * 100)}%
                           </div>
                           <div className="text-sm text-zinc-700 font-medium">
                             {source.filename || source.name || "Untitled Source"}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -59,10 +59,12 @@ import { useSearchParams } from 'next/navigation';
 interface ToolInvocation {
   toolName: string;
   state?: string;
+  step?: number;
+  toolCallId?: string;
   result?: any;
-  args: {
-    question: string;
-    topic: string;
+  args?: {
+    question?: string;
+    topic?: string;
     topicNumber?: number;
   };
   parts?: Array<{
@@ -90,6 +92,9 @@ export default function AdminLogs() {
   const searchParams = useSearchParams();
   const targetConversationId = searchParams.get('id');
   const targetLogRef = useRef<HTMLDivElement>(null);
+  
+  // Add a ref to track if we've already loaded for this target conversation
+  const hasLoadedTargetRef = useRef<string | null>(null);
 
   // State for logs and pagination
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -128,7 +133,16 @@ export default function AdminLogs() {
   }, [targetConversationId]);
 
   // Fetch logs from the API
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
+    console.log('Fetching logs with params:', { 
+      page, 
+      search: appliedSearch, 
+      startDate, 
+      endDate, 
+      rating, 
+      targetConversationId 
+    });
+    
     setLoading(true);
     setError(null);
     
@@ -231,21 +245,44 @@ export default function AdminLogs() {
         }, 300); // Delay to ensure everything is rendered
       }
     }
-  };
+  }, [appliedSearch, page, limit, startDate, endDate, rating, targetConversationId]);
 
   // Initialize and refresh when pagination or filters change
   useEffect(() => {
-    // Don't trigger another fetch if we're loading with a target conversation ID
-    // since we handle that with a separate effect
-    if (!targetConversationId || !loading) {
-      fetchLogs();
+    // Don't trigger another fetch if we're loading
+    // Skip if we're handling a target conversation in the other effect
+    if (loading || (targetConversationId && hasLoadedTargetRef.current === targetConversationId)) {
+      console.log('Skipping fetch (main effect):', { loading, targetConversationId, hasLoadedTarget: hasLoadedTargetRef.current });
+      return;
     }
-  }, [page, appliedSearch, startDate, endDate, rating]);
+    
+    console.log('Running main effect fetch');
+    // Only fetch if not already loading
+    fetchLogs();
+    // Removing fetchLogs from dependencies and using the function directly
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, appliedSearch, startDate, endDate, rating, targetConversationId, loading]);
 
   // Add a separate effect to handle the initial load with a target conversation ID
   useEffect(() => {
-    if (targetConversationId) {
+    // Only fetch if targetConversationId changes and we haven't already loaded this conversation
+    if (targetConversationId && hasLoadedTargetRef.current !== targetConversationId) {
+      console.log('Loading target conversation:', targetConversationId);
+      hasLoadedTargetRef.current = targetConversationId;
       fetchLogs();
+    } else {
+      console.log('Skipping conversation load:', { targetConversationId, hasLoadedTarget: hasLoadedTargetRef.current });
+    }
+    // Use fetchLogs directly in the effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetConversationId]);
+
+  // Reset the hasLoadedTargetRef when targetConversationId changes to null
+  useEffect(() => {
+    if (!targetConversationId && hasLoadedTargetRef.current !== null) {
+      console.log('Resetting hasLoadedTargetRef');
+      hasLoadedTargetRef.current = null;
+      // No need to call fetchLogs here as the main effect will handle it
     }
   }, [targetConversationId]);
 
@@ -259,7 +296,8 @@ export default function AdminLogs() {
   // Handle date filter changes
   const handleDateFilterApply = () => {
     setPage(1); // Reset to first page when applying new date filters
-    fetchLogs();
+    // fetchLogs will be called automatically by the useEffect
+    // No need to call fetchLogs() directly here
   };
 
   // Reset all filters
@@ -333,7 +371,7 @@ export default function AdminLogs() {
                   </Badge>
                 )}
               </div>
-              {tool.args.topic && (
+              {tool.args && tool.args.topic && (
               <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                 <Badge variant="secondary" className="bg-gray-100 border-gray-200">
                   Topic: {tool.args.topic} {tool.args.topicNumber && `#${tool.args.topicNumber}`}
@@ -356,9 +394,11 @@ export default function AdminLogs() {
                       fontSize: '12px',
                     }}
                   >
-                    {typeof tool.result === 'object' 
-                      ? JSON.stringify(tool.result, null, 2) 
-                      : String(tool.result)}
+                    {Array.isArray(tool.result)
+                      ? JSON.stringify(tool.result, null, 2)
+                      : typeof tool.result === 'object'
+                        ? JSON.stringify(tool.result, null, 2)
+                        : String(tool.result)}
                   </SyntaxHighlighter>
                 </div>
               </div>

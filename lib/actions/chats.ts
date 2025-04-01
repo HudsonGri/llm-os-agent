@@ -12,12 +12,16 @@ import { tagMessageContent } from '@/lib/ai/topic-tagger';
 type MessageRole = 'user' | 'assistant' | 'system' | 'data';
 
 interface ToolInvocation {
-  state: string;
   toolName: string;
+  state?: string;
+  step?: number;
+  toolCallId?: string;
+  args?: {
+    question?: string;
+    topic?: string;
+    topicNumber?: number;
+  };
   result?: any;
-  parts?: Array<{
-    toolInvocation: any;
-  }>;
 }
 
 interface SaveMessageParams {
@@ -136,15 +140,27 @@ export async function saveMessage({
         // Get the topic for this message
         const topic = await topicTaggingPromise;
 
+        // Transform tool calls to the correct format
+        const transformedToolInvocations = (
+          lastAssistantMessage.parts as Array<any>
+        ).filter(part => 
+          part && typeof part === 'object' && 'toolInvocation' in part && part.toolInvocation
+        ).map(part => ({
+          toolName: part.toolInvocation.toolName || 'unknown',
+          state: part.toolInvocation.state || 'result',
+          step: part.toolInvocation.step || 0,
+          toolCallId: part.toolInvocation.toolCallId || `call_${createId()}`,
+          args: part.toolInvocation.args || {},
+          result: part.toolInvocation.result
+        }));
+
         const [updatedChat] = await db
           .update(chats)
           .set({
             content,
             tokenCount: (prevAssistantMessage.tokenCount || 0) + (tokenCount || 0),
             processingTime: (prevAssistantMessage.processingTime || 0) + (processingTime || 0),
-            toolInvocations: lastAssistantMessage.parts.filter(part => 'toolInvocation' in part).map(invocation => ({
-              ...('toolInvocation' in invocation ? invocation.toolInvocation : {}),
-            })),
+            toolInvocations: transformedToolInvocations,
             topic, // Set the topic in the database
           })
           .where(eq(chats.id, prevAssistantMessage.id))
@@ -156,6 +172,16 @@ export async function saveMessage({
     // Wait for topic tagging to complete
     const topic = await topicTaggingPromise;
 
+    // Transform tool invocations for new messages
+    const transformedToolInvocations = toolInvocations.map(tool => ({
+      toolName: tool.toolName,
+      state: tool.state || 'result',
+      step: tool.step || 0,
+      toolCallId: tool.toolCallId || `call_${createId()}`,
+      args: tool.args || {},
+      result: tool.result
+    }));
+
     return await createChatMessage({
       id,
       userId,
@@ -165,7 +191,7 @@ export async function saveMessage({
       content,
       conversationId,
       parentMessageId,
-      toolInvocations,
+      toolInvocations: transformedToolInvocations,
       tokenCount,
       processingTime,
       topic, // Add the topic to the created message

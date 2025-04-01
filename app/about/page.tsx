@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Github } from "lucide-react";
 import { ChatLogo } from '@/components/ui/chat-logo';
+import Image from "next/image";
 
 export default function About() {
   return (
@@ -28,8 +29,8 @@ export default function About() {
               <h2 className="text-2xl font-medium mb-4 text-zinc-800 pb-2 border-b border-zinc-200">About</h2>
               <p className="text-zinc-600 mb-4 text-lg">
                 <strong>OS Chat Assistant</strong> is a AI-powered assistant built to help students tackle the toughest parts of their Operating Systems course. Created by{" "}
-                <Link href="https://github.com/mtang08" className="underline underline-offset-2 hover:text-zinc-600 transition-colors">Michael Tang</Link>,{" "}
-                <Link href="https://hudsong.dev" className="underline underline-offset-2 hover:text-zinc-600 transition-colors">Hudson Griffith</Link>, and{" "}
+                <Link href="https://hudsong.dev" className="underline underline-offset-2 hover:text-zinc-600 transition-colors">Hudson Griffith</Link>,{" "}
+                <Link href="https://github.com/mtang08" className="underline underline-offset-2 hover:text-zinc-600 transition-colors">Michael Tang</Link>, and{" "}
                 <Link href="https://github.com/erikhartker" className="underline underline-offset-2 hover:text-zinc-600 transition-colors">Erik Hartker</Link>, 
                 the project blends large language models with real course materials to give students accurate, easy-to-understand answers whenever they need help.
               </p>
@@ -60,10 +61,12 @@ export default function About() {
                 Here's a peek at the Admin Dashboard, where TAs and instructors can view usage stats, top questions, and student interaction trends in real time.
               </p>
               <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-2 mb-6 flex items-center justify-center">
-                <img 
+                <Image 
                   src="/imgs/admin-ui.jpg" 
                   alt="Admin Dashboard Interface" 
                   className="rounded-lg w-full max-w-4xl"
+                  width={800}
+                  height={450}
                 />
               </div>
               

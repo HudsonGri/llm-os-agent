@@ -1,4 +1,4 @@
-import React, { memo, useMemo, createContext, useContext } from 'react';
+import React, { memo, useMemo, createContext, useContext, ReactElement, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { ArrowUpRight, Copy, Check } from 'lucide-react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator"
 import type { Components } from 'react-markdown';
-import type { ReactNode, ComponentProps } from 'react';
+import type { ComponentProps, ComponentType } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -24,13 +24,21 @@ interface AssistantMessageProps {
     content: string;
     toolInvocations?: Array<{
       toolName: string;
-      result: Array<SourceInfo>;
+      state?: string;
+      step?: number;
+      toolCallId?: string;
+      args?: {
+        question?: string;
+        topic?: string;
+        topicNumber?: number;
+      };
+      result: Array<SourceInfo> | any;
     }>;
   };
 }
 
 type MarkdownComponentProps<T extends keyof JSX.IntrinsicElements> = 
-  ComponentProps<T> & { children: ReactNode };
+  ComponentProps<T> & { children?: ReactNode };
 
 // Context Setup
 const SourceContext = createContext<SourceInfo[]>([]);
@@ -125,11 +133,12 @@ const processSourceNumbers = (text: string): ReactNode[] => {
   
   return parts;
 };
+
 /**
- * Creates a memoized markdown component that handles source citations.
+ * Creates a component that handles source citations.
  */
-const createMarkdownComponent = <T extends keyof JSX.IntrinsicElements>(Component: T) => {
-  const MemoComponent = memo(({ children, ...props }: MarkdownComponentProps<T>) => {
+const createMarkdownComponent = <T extends keyof JSX.IntrinsicElements>(Component: T): ComponentType<any> => {
+  const MemoComponent = ({ children, ...props }: { children?: ReactNode } & ComponentProps<T>) => {
     const processChild = (child: ReactNode): ReactNode => {
       if (typeof child === 'string') return processSourceNumbers(child);
       if (!child) return child;
@@ -150,10 +159,10 @@ const createMarkdownComponent = <T extends keyof JSX.IntrinsicElements>(Componen
       props,
       React.Children.map(children, processChild)
     );
-  });
+  };
   
   MemoComponent.displayName = `MarkdownComponent(${Component})`;
-  return MemoComponent;
+  return memo(MemoComponent);
 };
 
 // Markdown component configuration
@@ -175,7 +184,7 @@ const markdownComponents: Partial<Components> = {
 
   // Special components with custom styling
   pre: (() => {
-    const PreComponent = memo(({ children, ...props }) => {
+    const PreComponent = ({ children, ...props }: { children?: ReactNode }) => {
       // Extract the code content from the nested structure
       const codeElement = Array.isArray(children) ? children[0] : children;
       const codeContent = codeElement?.props?.children?.[0] || '';
@@ -211,23 +220,23 @@ const markdownComponents: Partial<Components> = {
           </SyntaxHighlighter>
         </div>
       );
-    });
+    };
     PreComponent.displayName = 'CodePreComponent';
-    return PreComponent;
+    return memo(PreComponent);
   })(),
   
   code: (() => {
-    const CodeComponent = memo(({ children, ...props }) => (
+    const CodeComponent = ({ children, ...props }: { children?: ReactNode }) => (
       <code className="px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-sm" {...props}>
         {children}
       </code>
-    ));
+    );
     CodeComponent.displayName = 'CodeComponent';
-    return CodeComponent;
+    return memo(CodeComponent);
   })(),
   
   a: (() => {
-    const LinkComponent = memo(({ children, href, ...props }) => (
+    const LinkComponent = ({ children, href, ...props }: { children?: ReactNode, href?: string }) => (
       <Link
         className="text-blue-500 hover:text-blue-600 hover:underline"
         href={href || '#'}
@@ -237,27 +246,27 @@ const markdownComponents: Partial<Components> = {
       >
         {typeof children === 'string' ? processSourceNumbers(children) : children}
       </Link>
-    ));
+    );
     LinkComponent.displayName = 'MarkdownLinkComponent';
-    return LinkComponent;
+    return memo(LinkComponent);
   })(),
   
   table: (() => {
-    const TableComponent = memo(({ children, ...props }) => (
+    const TableComponent = ({ children, ...props }: { children?: ReactNode }) => (
       <div className="overflow-x-auto my-4">
         <table className="min-w-full divide-y divide-zinc-200" {...props}>
           {children}
         </table>
       </div>
-    ));
+    );
     TableComponent.displayName = 'MarkdownTableComponent';
-    return TableComponent;
+    return memo(TableComponent);
   })(),
   
   hr: (() => {
-    const HrComponent = memo((props) => <hr className="my-6 border-zinc-200" {...props} />);
+    const HrComponent = (props: any) => <hr className="my-6 border-zinc-200" {...props} />;
     HrComponent.displayName = 'MarkdownHrComponent';
-    return HrComponent;
+    return memo(HrComponent);
   })(),
 };
 

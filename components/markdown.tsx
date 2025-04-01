@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
@@ -6,56 +6,56 @@ import Link from 'next/link';
 // import { CodeBlock } from './code-block';
 
 // Create memoized components with display names
-const PreComponent = memo(({ children, ...props }) => (
+const PreComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <pre className="overflow-x-auto p-4 rounded-lg bg-zinc-100 my-4" {...props}>
     {children}
   </pre>
 ));
 PreComponent.displayName = 'MarkdownPre';
 
-const CodeComponent = memo(({ children, ...props }) => (
+const CodeComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <code className="px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-sm" {...props}>
     {children}
   </code>
 ));
 CodeComponent.displayName = 'MarkdownCode';
 
-const OrderedListComponent = memo(({ children, ...props }) => (
+const OrderedListComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <ol className="list-decimal list-inside space-y-2 my-4" {...props}>
     {children}
   </ol>
 ));
 OrderedListComponent.displayName = 'MarkdownOrderedList';
 
-const ListItemComponent = memo(({ children, ...props }) => (
+const ListItemComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <li className="leading-relaxed" {...props}>
     {children}
   </li>
 ));
 ListItemComponent.displayName = 'MarkdownListItem';
 
-const UnorderedListComponent = memo(({ children, ...props }) => (
+const UnorderedListComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <ul className="list-disc list-inside space-y-2 my-4" {...props}>
     {children}
   </ul>
 ));
 UnorderedListComponent.displayName = 'MarkdownUnorderedList';
 
-const StrongComponent = memo(({ children, ...props }) => (
+const StrongComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <strong className="font-semibold" {...props}>
     {children}
   </strong>
 ));
 StrongComponent.displayName = 'MarkdownStrong';
 
-const EmComponent = memo(({ children, ...props }) => (
+const EmComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <em className="italic" {...props}>
     {children}
   </em>
 ));
 EmComponent.displayName = 'MarkdownEm';
 
-const AnchorComponent = memo(({ children, href, ...props }) => (
+const AnchorComponent = memo(({ children, href, ...props }: { children?: ReactNode, href?: string }) => (
   <Link
     className="text-blue-500 hover:underline"
     href={href || '#'}
@@ -68,68 +68,68 @@ const AnchorComponent = memo(({ children, href, ...props }) => (
 ));
 AnchorComponent.displayName = 'MarkdownAnchor';
 
-const H1Component = memo(({ children, ...props }) => (
+const H1Component = memo(({ children, ...props }: { children?: ReactNode }) => (
   <h1 className="text-3xl font-semibold mt-8 mb-4" {...props}>
     {children}
   </h1>
 ));
 H1Component.displayName = 'MarkdownH1';
 
-const H2Component = memo(({ children, ...props }) => (
+const H2Component = memo(({ children, ...props }: { children?: ReactNode }) => (
   <h2 className="text-2xl font-semibold mt-6 mb-3" {...props}>
     {children}
   </h2>
 ));
 H2Component.displayName = 'MarkdownH2';
 
-const H3Component = memo(({ children, ...props }) => (
+const H3Component = memo(({ children, ...props }: { children?: ReactNode }) => (
   <h3 className="text-xl font-semibold mt-5 mb-3" {...props}>
     {children}
   </h3>
 ));
 H3Component.displayName = 'MarkdownH3';
 
-const H4Component = memo(({ children, ...props }) => (
+const H4Component = memo(({ children, ...props }: { children?: ReactNode }) => (
   <h4 className="text-lg font-semibold mt-4 mb-2" {...props}>
     {children}
   </h4>
 ));
 H4Component.displayName = 'MarkdownH4';
 
-const H5Component = memo(({ children, ...props }) => (
+const H5Component = memo(({ children, ...props }: { children?: ReactNode }) => (
   <h5 className="text-base font-semibold mt-4 mb-2" {...props}>
     {children}
   </h5>
 ));
 H5Component.displayName = 'MarkdownH5';
 
-const H6Component = memo(({ children, ...props }) => (
+const H6Component = memo(({ children, ...props }: { children?: ReactNode }) => (
   <h6 className="text-sm font-semibold mt-4 mb-2" {...props}>
     {children}
   </h6>
 ));
 H6Component.displayName = 'MarkdownH6';
 
-const ParagraphComponent = memo(({ children, ...props }) => (
+const ParagraphComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <p className="leading-relaxed mb-4 last:mb-0" {...props}>
     {children}
   </p>
 ));
 ParagraphComponent.displayName = 'MarkdownParagraph';
 
-const BlockquoteComponent = memo(({ children, ...props }) => (
+const BlockquoteComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <blockquote className="border-l-4 border-zinc-200 pl-4 my-4 italic" {...props}>
     {children}
   </blockquote>
 ));
 BlockquoteComponent.displayName = 'MarkdownBlockquote';
 
-const HrComponent = memo((props) => (
+const HrComponent = memo((props: any) => (
   <hr className="my-6 border-zinc-200" {...props} />
 ));
 HrComponent.displayName = 'MarkdownHr';
 
-const TableComponent = memo(({ children, ...props }) => (
+const TableComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <div className="overflow-x-auto my-4">
     <table className="min-w-full divide-y divide-zinc-200" {...props}>
       {children}
@@ -138,14 +138,14 @@ const TableComponent = memo(({ children, ...props }) => (
 ));
 TableComponent.displayName = 'MarkdownTable';
 
-const TableHeaderComponent = memo(({ children, ...props }) => (
+const TableHeaderComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <th className="px-4 py-2 bg-zinc-50 font-semibold text-left" {...props}>
     {children}
   </th>
 ));
 TableHeaderComponent.displayName = 'MarkdownTableHeader';
 
-const TableCellComponent = memo(({ children, ...props }) => (
+const TableCellComponent = memo(({ children, ...props }: { children?: ReactNode }) => (
   <td className="px-4 py-2 border-t border-zinc-100" {...props}>
     {children}
   </td>

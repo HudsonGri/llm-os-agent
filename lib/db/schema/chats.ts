@@ -1,7 +1,9 @@
 import { pgTable, text, timestamp, integer, jsonb, varchar } from 'drizzle-orm/pg-core';
 import { createId } from '@paralleldrive/cuid2';
+import { sql } from 'drizzle-orm';
 
-export const chats = pgTable('chats', {
+// Declare the table schema without self-references first
+const chatsSchema = {
   // Basic info
   id: text('id').primaryKey().$defaultFn(() => createId()),
   userId: text('user_id'), // For future auth integration
@@ -34,7 +36,7 @@ export const chats = pgTable('chats', {
   }>>(),
   
   // Message metadata
-  parentMessageId: text('parent_message_id').references(() => chats.id), // For threading
+  parentMessageId: text('parent_message_id'),
   conversationId: text('conversation_id').notNull(), // Group messages in conversations
   
   // Performance metrics
@@ -48,7 +50,18 @@ export const chats = pgTable('chats', {
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+};
+
+// Create the table with the schema
+export const chats = pgTable('chats', chatsSchema);
+
+// Now add the foreign key constraint after the table is defined
+export const addChatsForeignKey = sql`
+  ALTER TABLE "chats" 
+  ADD CONSTRAINT "chats_parent_message_id_fkey" 
+  FOREIGN KEY ("parent_message_id") 
+  REFERENCES "chats" ("id")
+`;
 
 // Types for TypeScript
 export type Chat = typeof chats.$inferSelect;

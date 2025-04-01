@@ -126,13 +126,31 @@ If asked to generate code for exercises or projects, decline and encourage the u
           isCompleted = true;
 
           try {
+            // Debug log to see tool call structure
+            console.log('Raw tool calls from AI:', JSON.stringify(completion.toolCalls, null, 2));
+            
+            // Process the tool calls to ensure we have all required fields
+            const processedToolCalls = completion.toolCalls ? completion.toolCalls.map((toolCall: any, index: number) => {
+              const processed = {
+                toolName: toolCall.toolName,
+                toolCallId: toolCall.toolCallId,
+                state: toolCall.state || 'result',
+                step: index,
+                args: toolCall.args || {},
+                result: toolCall.result
+              };
+              
+              console.log(`Processed tool call ${index}:`, JSON.stringify(processed, null, 2));
+              return processed;
+            }) : [];
+
             await saveMessage({
               id: completion.response.messages?.[0]?.id,
               role: 'assistant',
               content: completion.text,
               conversationId,
               parentMessageId: parentMessage?.id,
-              toolInvocations: completion.toolCalls,
+              toolInvocations: processedToolCalls,
               userIp,
               userAgent,
               processingTime: Date.now() - startTime,
