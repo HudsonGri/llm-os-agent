@@ -65,7 +65,7 @@ export function ChatInput({
                 isEmptyVariant 
                   ? 'bg-white border border-zinc-200 shadow-sm hover:border-zinc-300 focus:border-zinc-300'
                   : 'bg-zinc-100 border border-zinc-200'
-              } rounded-2xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-600/20 resize-none overflow-y-auto transition-all duration-300`}
+              } rounded-2xl focus:outline-none resize-none overflow-y-auto transition-all duration-300`}
               style={{ minHeight: '52px', maxHeight: '200px' }}
             />
             <Button 
@@ -77,7 +77,7 @@ export function ChatInput({
                   ? 'bg-zinc-900 hover:bg-zinc-800'
                   : 'bg-zinc-900 hover:bg-zinc-700'
               } rounded-full transition-colors`}
-              disabled={!input.trim()}
+              disabled={!isLoading && !input.trim()}
             >
               {isLoading ? (
                 <Square fill="white" className="h-3 w-3" />

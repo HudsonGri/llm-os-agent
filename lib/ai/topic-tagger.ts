@@ -2,18 +2,37 @@ import { openai } from '@ai-sdk/openai';
 import { tool, generateText } from 'ai';
 import { z } from 'zod';
 
-// Example topics for categorization, we will need to change these
-const EXAMPLE_TOPICS = [
-  'Course Material', 
-  'Assignment Help',
-  'Exam Preparation',
-  'Technical Concept',
-  'Clarification',
-  'Project Discussion',
-  'Study Strategy',
-  'General Question',
-  'Feedback',
-  'Off-topic'
+// Topics based on course structure
+const TOPICS = [
+  "General Question",
+  "Exercise 0",
+  "OS Fundamentals",
+  "Exercise 1",
+  "Project 0",
+  "Processes & Threads",
+  "Exercise 2",
+  "Synchronization",
+  "Exercise 3",
+  "Scheduling",
+  "Exercise 4",
+  "Memory Management",
+  "Exercise 5",
+  "Virtual Memory",
+  "Exercise 6",
+  "Exam 1",
+  "Filesystem Fundamentals",
+  "Exercise 7",
+  "Filesystem Implementation",
+  "Exercise 8",
+  "I/O Devices",
+  "Exercise 9",
+  "Networking",
+  "Project 1",
+  "Project 2",
+  "Deadlock",
+  "Project 3",
+  "Security",
+  "Exam 2"
 ];
 
 /**
@@ -26,11 +45,11 @@ export async function tagMessageContent(content: string): Promise<{ topic: strin
     const result = await generateText({
       model: openai('gpt-4o-mini-2024-07-18'),
       system: `You are a message classifier that assigns the most appropriate topic tag to messages.
-      Choose the single most appropriate topic from this list: ${EXAMPLE_TOPICS.join(', ')}.
+      Choose the single most appropriate topic from this list: ${TOPICS.join(', ')}.
       If none match well, use "General Question". Response should be just the topic name, nothing else.`,
       prompt: `Message to classify: "${content}"`,
       temperature: 0.1, // Low temperature for consistent results
-      maxTokens: 10,    // We only need a short response
+      maxTokens: 15,    // We only need a short response
     });
 
     // Extract the topic from the response (the result is the text itself)
@@ -38,7 +57,7 @@ export async function tagMessageContent(content: string): Promise<{ topic: strin
     
     // Validate that it's one of our example topics
     return { 
-      topic: EXAMPLE_TOPICS.includes(topic) ? topic : 'General Question' 
+      topic: TOPICS.includes(topic) ? topic : 'General Question' 
     };
   } catch (error) {
     console.error('Error tagging message content:', error);

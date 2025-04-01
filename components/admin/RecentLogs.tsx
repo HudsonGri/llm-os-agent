@@ -324,9 +324,6 @@ export default function RecentLogs() {
         <p className="text-xs text-gray-500">
           {logs.items.length} out of {logs.total} total conversations
         </p>
-        <Link href="/admin/logs" className="text-xs text-blue-600 hover:text-blue-800 hover:underline">
-          See all conversations
-        </Link>
       </CardFooter>
     </Card>
   );

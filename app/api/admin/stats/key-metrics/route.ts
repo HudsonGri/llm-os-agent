@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     // If no users table, we'll just use the active users as our base
     const uniqueUsers = Number(userParticipation[0]?.uniqueUsers) || 0;
     
-    // 2. Get top 5 topics
+    // 2. Get top topics
     const topTopics = await db.execute(sql`
       SELECT 
         ${chats.topic} as "topic",
@@ -51,7 +51,6 @@ export async function GET(request: Request) {
         AND ${chats.topic} != ''
       GROUP BY ${chats.topic}
       ORDER BY "count" DESC
-      LIMIT 5
     `);
     
     // 3. Get messages per conversation

@@ -1,11 +1,10 @@
 // app/api/chat/route.ts
 import { openai } from '@ai-sdk/openai';
+import { google } from '@ai-sdk/google';
 import { streamText, tool, smoothStream } from 'ai';
 import { z } from 'zod';
 import { findRelevantContent } from '@/lib/ai/embedding';
 
-// Import function for asynchronous topic tagging
-import { tagMessageContent } from '@/lib/ai/topic-tagger';
 
 import { saveMessage, createConversation } from '@/lib/actions/chats';
 import { headers } from 'next/headers';
@@ -86,21 +85,32 @@ export async function POST(req: Request) {
 
     try {
       const result = streamText({
-        model: openai('gpt-4o-mini-2024-07-18'),
-        system: `You are a helpful assistant specialized in answering questions about the course content.
-        Always check your course slide knowledge base before answering. 
-        Only respond with information from tool calls; if no relevant information is found, respond with "Sorry, I don't know."
-        If you use a specific course slide content, mention it by stating a source tag 【source_NUMBER】 at the very end of your response (e.g. 【source_1】) You can only cite a single source once, so if you cite a source, don't cite it again in the same response. If you are not provided any sources from the tool call, don't mention any source tags.`,
+        model: openai('gpt-4o'),
+        // model: google('gemini-2.0-flash-lite-preview-02-05'),
+        system: `
+You are a specialized assistant for answering questions about COP4600, Operating Systems.
+
+Check your knowledge base before responding. Prioritize "topic-specific" sources over "general" ones for accurate and relevant information. 
+
+Respond only with information from tool calls. If no relevant information is available, reply with "I couldn't find any relevant course-specific information on that topic. Could you please clarify or ask another question?"
+
+Answer only questions specifically related to the Operating Systems course. If a question is off-topic, inform the user that you can only assist with Operating Systems content.
+
+When using a specific source, include a source tag at the end of your response, e.g., 【source_NUMBER】. Cite each source only once per response. Do not include any source tags if no tool call is used.
+
+If asked to generate code for exercises or projects, decline and encourage the user to attempt it themselves first. Offer troubleshooting assistance thereafter.`,
         messages,
         tools: {
           getInformation: tool({
-            description: `Retrieve course slide content from the knowledge base to answer questions.`,
+            description: `Retrieve course content from the knowledge base to answer questions. If the user's question is about a specific topic such as asking about a specific project or exercise, use the questionTopic parameter to specify the topic. Only use this tool once per question.`,
             parameters: z.object({
               question: z.string().describe('the user\'s question'),
+              topic: z.enum(['exercise', 'project', 'lecture slides', 'other']).describe('the topic of the user\'s question'),
+              topicNumber: z.number().optional().describe('optional number for specific exercises or projects'),
             }),
-            execute: async ({ question }) => {
+            execute: async ({ question, topic, topicNumber }) => {
               try {
-                return await findRelevantContent(question);
+                return await findRelevantContent(question, topic, topicNumber);
               } catch (error) {
                 console.error('Error finding relevant content:', error);
                 // Return empty results rather than failing completely

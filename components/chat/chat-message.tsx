@@ -76,7 +76,13 @@ export function ChatMessage({ message: m, isTopicResult, extractSourceNumbers, T
                       className="p-4 flex items-center gap-3"
                     >
                       <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
-                      <span className="text-sm text-zinc-500">Thinking...</span>
+                      {m.toolInvocations?.some(t => t.toolName === 'getInformation' && !t.result) ? (
+                        <span className="text-sm text-zinc-500">Searching course content...</span>
+                      ) : m.toolInvocations?.some(t => t.toolName === 'getInformation' && t.result) ? (
+                        <span className="text-sm text-zinc-500">Generating a response...</span>
+                      ) : (
+                        <span className="text-sm text-zinc-500">Thinking...</span>
+                      )}
                     </div>
                   ) : (
                     <div>

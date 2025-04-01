@@ -8,7 +8,7 @@ export default function NotFound() {
         <div className="flex flex-col items-center space-y-4">
           <h1 className="text-2xl font-bold text-zinc-900">Page not found</h1>
           <p className="text-zinc-600">
-            We couldn't find the page you're looking for. It might have been moved, deleted, or never existed.
+            We couldn't find the page you're looking for.
           </p>
         </div>
         <div className="flex justify-center">
