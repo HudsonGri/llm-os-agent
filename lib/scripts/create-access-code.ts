@@ -1,5 +1,17 @@
 #!/usr/bin/env tsx
 
+/**
+ * Script to create an access code for the chatbot
+ * 
+ * Usage:
+ *   pnpm run auth:create-code
+ *   pnpm run auth:create-code -- --description "Admin access" --expiryDays 30
+ * 
+ * Options:
+ *   --description  Description of the access code (default: "Command line generated access code")
+ *   --expiryDays   Number of days until the code expires (default: 90)
+ */
+
 import { db } from '../db';
 import { createAccessCode } from '../actions/auth';
 
