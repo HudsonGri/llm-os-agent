@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import AccessForm from '@/components/auth/AccessForm';
 import { verifySession } from '@/lib/actions/auth';
 import { ChatLogo } from '@/components/ui/chat-logo';
+import Link from 'next/link';
 
 export default async function AccessPage({
   searchParams,
@@ -47,7 +48,13 @@ export default async function AccessPage({
         </div>
         
         <AccessForm />
-        
+      </div>
+      
+      {/* Footer links */}
+      <div className="absolute bottom-6 flex justify-center w-full">
+        <Link href="/about" className="text-xs text-zinc-500 hover:text-zinc-800 transition-colors">
+          More Information
+        </Link>
       </div>
     </div>
   );
