@@ -29,6 +29,13 @@
       "when": 1740597630770,
       "tag": "0003_icy_stepford_cuckoos",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1743471302529,
+      "tag": "0004_magenta_kid_colt",
+      "breakpoints": true
     }
   ]
 }
