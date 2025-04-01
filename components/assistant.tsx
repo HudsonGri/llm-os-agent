@@ -128,8 +128,8 @@ const processSourceNumbers = (text: string): ReactNode[] => {
 /**
  * Creates a memoized markdown component that handles source citations.
  */
-const createMarkdownComponent = <T extends keyof JSX.IntrinsicElements>(Component: T) => 
-  memo(({ children, ...props }: MarkdownComponentProps<T>) => {
+const createMarkdownComponent = <T extends keyof JSX.IntrinsicElements>(Component: T) => {
+  const MemoComponent = memo(({ children, ...props }: MarkdownComponentProps<T>) => {
     const processChild = (child: ReactNode): ReactNode => {
       if (typeof child === 'string') return processSourceNumbers(child);
       if (!child) return child;
@@ -151,6 +151,10 @@ const createMarkdownComponent = <T extends keyof JSX.IntrinsicElements>(Componen
       React.Children.map(children, processChild)
     );
   });
+  
+  MemoComponent.displayName = `MarkdownComponent(${Component})`;
+  return MemoComponent;
+};
 
 // Markdown component configuration
 const markdownComponents: Partial<Components> = {
@@ -170,67 +174,91 @@ const markdownComponents: Partial<Components> = {
   td: createMarkdownComponent('td'),
 
   // Special components with custom styling
-  pre: memo(({ children, ...props }) => {
-    // Extract the code content from the nested structure
-    const codeElement = Array.isArray(children) ? children[0] : children;
-    const codeContent = codeElement?.props?.children?.[0] || '';
-    const language = codeElement?.props?.className?.replace('language-', '') || 'text';
+  pre: (() => {
+    const PreComponent = memo(({ children, ...props }) => {
+      // Extract the code content from the nested structure
+      const codeElement = Array.isArray(children) ? children[0] : children;
+      const codeContent = codeElement?.props?.children?.[0] || '';
+      const language = codeElement?.props?.className?.replace('language-', '') || 'text';
 
-    const [copied, setCopied] = React.useState(false);
+      const [copied, setCopied] = React.useState(false);
 
-    const handleCopy = () => {
-      navigator.clipboard.writeText(codeContent);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    };
+      const handleCopy = () => {
+        navigator.clipboard.writeText(codeContent);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
 
-    return (
-      <div className="relative group">
-        <button
-          onClick={handleCopy}
-          className="absolute right-2 top-2 p-1.5 rounded-md bg-zinc-100 hover:bg-zinc-200 transition-colors"
-          aria-label="Copy code"
-        >
-          {copied ? (
-            <Check className="h-3.5 w-3.5 text-zinc-700" />
-          ) : (
-            <Copy className="h-3.5 w-3.5 text-zinc-700" />
-          )}
-        </button>
-        <SyntaxHighlighter 
-          language={language} 
-          style={prism}
-          {...props}
-        >
-          {codeContent}
-        </SyntaxHighlighter>
-      </div>
-    );
-  }),
-  code: memo(({ children, ...props }) => (
-    <code className="px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-sm" {...props}>
-      {children}
-    </code>
-  )),
-  a: memo(({ children, href, ...props }) => (
-    <Link
-      className="text-blue-500 hover:text-blue-600 hover:underline"
-      href={href || '#'}
-      target="_blank"
-      rel="noreferrer"
-      {...props}
-    >
-      {typeof children === 'string' ? processSourceNumbers(children) : children}
-    </Link>
-  )),
-  table: memo(({ children, ...props }) => (
-    <div className="overflow-x-auto my-4">
-      <table className="min-w-full divide-y divide-zinc-200" {...props}>
+      return (
+        <div className="relative group">
+          <button
+            onClick={handleCopy}
+            className="absolute right-2 top-2 p-1.5 rounded-md bg-zinc-100 hover:bg-zinc-200 transition-colors"
+            aria-label="Copy code"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-zinc-700" />
+            ) : (
+              <Copy className="h-3.5 w-3.5 text-zinc-700" />
+            )}
+          </button>
+          <SyntaxHighlighter 
+            language={language} 
+            style={prism}
+            {...props}
+          >
+            {codeContent}
+          </SyntaxHighlighter>
+        </div>
+      );
+    });
+    PreComponent.displayName = 'CodePreComponent';
+    return PreComponent;
+  })(),
+  
+  code: (() => {
+    const CodeComponent = memo(({ children, ...props }) => (
+      <code className="px-1.5 py-0.5 rounded-md bg-zinc-100 font-mono text-sm" {...props}>
         {children}
-      </table>
-    </div>
-  )),
-  hr: memo((props) => <hr className="my-6 border-zinc-200" {...props} />),
+      </code>
+    ));
+    CodeComponent.displayName = 'CodeComponent';
+    return CodeComponent;
+  })(),
+  
+  a: (() => {
+    const LinkComponent = memo(({ children, href, ...props }) => (
+      <Link
+        className="text-blue-500 hover:text-blue-600 hover:underline"
+        href={href || '#'}
+        target="_blank"
+        rel="noreferrer"
+        {...props}
+      >
+        {typeof children === 'string' ? processSourceNumbers(children) : children}
+      </Link>
+    ));
+    LinkComponent.displayName = 'MarkdownLinkComponent';
+    return LinkComponent;
+  })(),
+  
+  table: (() => {
+    const TableComponent = memo(({ children, ...props }) => (
+      <div className="overflow-x-auto my-4">
+        <table className="min-w-full divide-y divide-zinc-200" {...props}>
+          {children}
+        </table>
+      </div>
+    ));
+    TableComponent.displayName = 'MarkdownTableComponent';
+    return TableComponent;
+  })(),
+  
+  hr: (() => {
+    const HrComponent = memo((props) => <hr className="my-6 border-zinc-200" {...props} />);
+    HrComponent.displayName = 'MarkdownHrComponent';
+    return HrComponent;
+  })(),
 };
 
 /**
