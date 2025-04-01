@@ -134,7 +134,7 @@ function ConversationGroup({
                 ${isCurrentConversation ? 'bg-zinc-100 text-zinc-900 font-medium' : 'text-zinc-600 hover:text-zinc-900'}`}
               onClick={() => onSelectConversation(conv.id)}
             >
-              <div className="truncate max-w-[190px]">{displayTitle}</div>
+              <div className="truncate max-w-[220px]">{displayTitle}</div>
             </Button>
             
             {/* Always visible on hover, positioned absolutely */}

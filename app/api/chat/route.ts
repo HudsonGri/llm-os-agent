@@ -1,5 +1,6 @@
 // app/api/chat/route.ts
 import { openai } from '@ai-sdk/openai';
+import { google } from '@ai-sdk/google';
 import { streamText, tool, smoothStream } from 'ai';
 import { z } from 'zod';
 import { findRelevantContent } from '@/lib/ai/embedding';
@@ -84,7 +85,8 @@ export async function POST(req: Request) {
 
     try {
       const result = streamText({
-        model: openai('gpt-4o-mini-2024-07-18'),
+        model: openai('gpt-4o'),
+        // model: google('gemini-2.0-flash-lite-preview-02-05'),
         system: `
 You are a specialized assistant for answering questions about COP4600, Operating Systems.
 
@@ -100,7 +102,7 @@ If asked to generate code for exercises or projects, decline and encourage the u
         messages,
         tools: {
           getInformation: tool({
-            description: `Retrieve course slide content from the knowledge base to answer questions. If the user's question is about a specific topic such as asking about a specific project or exercise, use the questionTopic parameter to specify the topic.`,
+            description: `Retrieve course content from the knowledge base to answer questions. If the user's question is about a specific topic such as asking about a specific project or exercise, use the questionTopic parameter to specify the topic. Only use this tool once per question.`,
             parameters: z.object({
               question: z.string().describe('the user\'s question'),
               topic: z.enum(['exercise', 'project', 'lecture slides', 'other']).describe('the topic of the user\'s question'),

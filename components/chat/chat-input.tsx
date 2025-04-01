@@ -77,7 +77,7 @@ export function ChatInput({
                   ? 'bg-zinc-900 hover:bg-zinc-800'
                   : 'bg-zinc-900 hover:bg-zinc-700'
               } rounded-full transition-colors`}
-              disabled={!input.trim()}
+              disabled={!isLoading && !input.trim()}
             >
               {isLoading ? (
                 <Square fill="white" className="h-3 w-3" />

@@ -25,6 +25,7 @@ type ContentResult = {
   url: string | null;
   filepath: string | null;
   source: 'topic-specific' | 'general';
+  source_number?: number;
 };
 
 export const findRelevantContent = async (
@@ -125,5 +126,11 @@ export const findRelevantContent = async (
     }
   }
   
-  return combinedResults;
+  // Add source_number to each result based on its index in the array
+  const numberedResults = combinedResults.map((result, index) => ({
+    ...result,
+    source_number: index + 1
+  }));
+  
+  return numberedResults;
 };
