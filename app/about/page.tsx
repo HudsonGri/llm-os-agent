@@ -12,16 +12,33 @@ export default function About() {
     <div className="flex w-full min-h-screen bg-white">
       <div className="flex-1 flex flex-col min-w-0">
         <div className="w-full max-w-4xl mx-auto px-6 py-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Link href="/">
-              <Button variant="ghost" size="icon" className="rounded-lg hover:bg-zinc-100">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <ChatLogo className="w-10 h-10" fill="#3c74d4" />
-              <h1 className="text-3xl font-semibold text-zinc-900">About OS Chat Assistant</h1>
+              <Link href="/">
+                <Button variant="ghost" size="icon" className="rounded-lg hover:bg-zinc-100">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-3">
+                <ChatLogo className="w-10 h-10" fill="#3c74d4" />
+                <h1 className="text-3xl font-semibold text-zinc-900">About OS Chat Assistant</h1>
+              </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="group inline-flex items-center gap-2"
+              asChild
+            >
+              <Link 
+                href="https://github.com/HudsonGri/llm-os-agent" 
+                target="_blank"
+                className="no-underline"
+              >
+                <Github className="h-4 w-4" />
+                <span className="font-medium">View on GitHub</span>
+              </Link>
+            </Button>
           </div>
           
           <div className="prose prose-zinc max-w-none">
@@ -69,22 +86,6 @@ export default function About() {
                   height={450}
                 />
               </div>
-              
-              <Button
-                variant="outline"
-                size="lg"
-                className="group inline-flex items-center gap-3"
-                asChild
-              >
-                <Link 
-                  href="https://github.com/HudsonGri/llm-os-agent" 
-                  target="_blank"
-                  className="no-underline"
-                >
-                  <Github className="h-5 w-5" />
-                  <span className="font-medium">View on GitHub</span>
-                </Link>
-              </Button>
             </section>
           </div>
         </div>
