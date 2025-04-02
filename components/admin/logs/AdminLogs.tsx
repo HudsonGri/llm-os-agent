@@ -247,7 +247,14 @@ export default function AdminLogs() {
     }
   }, [appliedSearch, page, limit, startDate, endDate, rating, targetConversationId]);
 
-  // Initialize and refresh when pagination or filters change
+  // Add a useEffect for initial data loading
+  useEffect(() => {
+    // This effect will run once on component mount to fetch initial data
+    fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Remove 'loading' from the dependency array in the existing useEffect to prevent circular dependency
   useEffect(() => {
     // Don't trigger another fetch if we're loading
     // Skip if we're handling a target conversation in the other effect
@@ -261,7 +268,7 @@ export default function AdminLogs() {
     fetchLogs();
     // Removing fetchLogs from dependencies and using the function directly
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, appliedSearch, startDate, endDate, rating, targetConversationId, loading]);
+  }, [page, appliedSearch, startDate, endDate, rating, targetConversationId]);
 
   // Add a separate effect to handle the initial load with a target conversation ID
   useEffect(() => {
