@@ -295,8 +295,8 @@ export default function AccessTokens() {
     <div className="flex-1 p-5 flex flex-col gap-5 w-full mx-auto">
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-3">
         <div>
-          <p className="text-muted-foreground text-lg font-medium">
-            Create and manage access codes for student use
+          <p className="text-muted-foreground text-sm md:text-base lg:text-lg font-medium max-w-xl">
+            Manage access codes that allow students to authenticate and use the chatbot
           </p>
         </div>
         {renderCreateAccessCodeDialog(
