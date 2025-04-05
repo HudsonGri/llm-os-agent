@@ -303,7 +303,7 @@ export default function Chat() {
                   <ChatLogo className="w-14 h-14" fill="#3c74d4" />
                   <h1 className="text-4xl font-semibold text-zinc-900">OS Chat Assistant</h1>
                 </div>
-                <p className="text-zinc-500 text-center">Your 24/7 helper for Operating Systems (COP600)</p>
+                <p className="text-zinc-500 text-center">Your 24/7 helper for Operating Systems (COP4600)</p>
               </div>
               
               {errorMessage && (
