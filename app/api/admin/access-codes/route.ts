@@ -1,21 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { accessCodes } from '@/lib/db/schema/auth';
-import { createAccessCode, revokeAccessCode } from '@/lib/actions/auth';
-import { eq } from 'drizzle-orm';
+import { db, accessCodes } from '@/lib/db';
+import { desc, eq, sql } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 
 // GET /api/admin/access-codes - List all access codes
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    // Get all access codes with their associated sessions
-    const codes = await db.query.accessCodes.findMany({
+    // Fetch all access codes with session count
+    const result = await db.query.accessCodes.findMany({
+      orderBy: [desc(accessCodes.createdAt)],
       with: {
-        sessions: true
+        sessions: true,
       },
-      orderBy: (accessCodes, { desc }) => [desc(accessCodes.createdAt)]
     });
 
-    return NextResponse.json(codes);
+    // Format the response
+    const accessCodesWithSessionCount = result.map((code) => ({
+      id: code.id,
+      code: code.code,
+      expires_at: code.expiresAt,
+      revoked: code.revoked,
+      created_at: code.createdAt,
+      last_used_at: code.lastUsedAt,
+      description: code.description,
+      session_count: code.sessions.length,
+    }));
+
+    return NextResponse.json({ accessCodes: accessCodesWithSessionCount });
   } catch (error) {
     console.error('Error fetching access codes:', error);
     return NextResponse.json(
@@ -26,25 +37,47 @@ export async function GET() {
 }
 
 // POST /api/admin/access-codes - Create a new access code
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const { description, expiryDays } = await request.json();
+    const { description, expires_at, custom_code } = await req.json();
+
+    // Use custom code if provided, otherwise generate a secure random access code
+    const code = custom_code ? custom_code : uuidv4();
+
+    // Create the access code
+    const result = await db.insert(accessCodes).values({
+      code,
+      description: description || null,
+      expiresAt: expires_at ? new Date(expires_at) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // Default 90 days
+      revoked: false,
+    }).returning();
+
+    const accessCode = result[0];
+
+    // Format the response
+    const formattedAccessCode = {
+      id: accessCode.id,
+      code: accessCode.code,
+      expires_at: accessCode.expiresAt,
+      revoked: accessCode.revoked,
+      created_at: accessCode.createdAt,
+      last_used_at: accessCode.lastUsedAt,
+      description: accessCode.description,
+      session_count: 0,
+    };
+
+    return NextResponse.json({ accessCode: formattedAccessCode });
+  } catch (error) {
+    console.error('Error creating access code:', error);
     
-    const result = await createAccessCode({ 
-      description,
-      expiryDays: expiryDays ? parseInt(expiryDays) : undefined
-    });
-    
-    if (!result.success) {
+    // Handle unique constraint violation
+    if (error instanceof Error && error.message.includes('unique constraint')) {
       return NextResponse.json(
-        { error: result.error || 'Failed to create access code' },
-        { status: 500 }
+        { error: 'Access code already exists' },
+        { status: 409 }
       );
     }
     
-    return NextResponse.json(result, { status: 201 });
-  } catch (error) {
-    console.error('Error creating access code:', error);
     return NextResponse.json(
       { error: 'Failed to create access code' },
       { status: 500 }
@@ -53,33 +86,46 @@ export async function POST(request: NextRequest) {
 }
 
 // PATCH /api/admin/access-codes - Update an access code (revoke/unrevoke)
-export async function PATCH(request: NextRequest) {
+export async function PATCH(req: NextRequest) {
   try {
-    const { id, revoked } = await request.json();
-    
-    if (revoked === true) {
-      const result = await revokeAccessCode(id);
-      
-      if (!result.success) {
-        return NextResponse.json(
-          { error: result.error || 'Failed to revoke access code' },
-          { status: 500 }
-        );
-      }
-    } else if (revoked === false) {
-      // Un-revoke the access code
-      await db
-        .update(accessCodes)
-        .set({ revoked: false })
-        .where(eq(accessCodes.id, id));
-    } else {
+    const { id, revoked } = await req.json();
+
+    if (typeof id !== 'number') {
       return NextResponse.json(
-        { error: 'Invalid request. The "revoked" field must be true or false.' },
+        { error: 'Invalid access code ID' },
         { status: 400 }
       );
     }
-    
-    return NextResponse.json({ success: true });
+
+    // Update the access code
+    const result = await db.update(accessCodes)
+      .set({
+        revoked: !!revoked,
+      })
+      .where(eq(accessCodes.id, id))
+      .returning();
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: 'Access code not found' },
+        { status: 404 }
+      );
+    }
+
+    const accessCode = result[0];
+
+    // Format the response
+    const formattedAccessCode = {
+      id: accessCode.id,
+      code: accessCode.code,
+      expires_at: accessCode.expiresAt,
+      revoked: accessCode.revoked,
+      created_at: accessCode.createdAt,
+      last_used_at: accessCode.lastUsedAt,
+      description: accessCode.description,
+    };
+
+    return NextResponse.json({ accessCode: formattedAccessCode });
   } catch (error) {
     console.error('Error updating access code:', error);
     return NextResponse.json(
