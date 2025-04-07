@@ -1,9 +1,12 @@
-'use client';
-
 import React, { Suspense } from 'react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminLogs from '@/components/admin/logs/AdminLogs';
 import { Skeleton } from '@/components/ui/skeleton';
+
+export const metadata = {
+  title: 'Chat Logs - Admin',
+  description: 'View chat logs for the chatbot',
+};
 
 // Loader component to display while AdminLogs is loading
 const LogsLoader = () => (

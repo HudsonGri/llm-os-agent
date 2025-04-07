@@ -51,6 +51,11 @@ export default function AdminDashboard() {
                 View All Logs
               </Button>
             </Link>
+            <Link href="/admin/access">
+              <Button variant="outline" size="sm">
+                Access Management
+              </Button>
+            </Link>
             <Link href="/admin/settings">
               <Button variant="default" size="sm">
                 Admin Settings
