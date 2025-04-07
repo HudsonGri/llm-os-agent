@@ -23,6 +23,7 @@ interface ChatHistoryProps {
   onNewChat: () => void;
   reloadConversations?: (reloadFn: (skipLoadingState?: boolean) => Promise<void>) => void;
   userMessageCache?: Record<string, string>;
+  maxTitleWidth?: string; // Optional parameter for max width of conversation titles
 }
 
 interface Conversation {
@@ -37,6 +38,10 @@ type ConversationGroups = {
   previousWeek?: Conversation[];
   older?: Conversation[];
 };
+
+// Cache configuration
+const CACHE_KEY = 'chat_history_conversations';
+const CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 
 /**
  * Truncates a message to the specified length and adds ellipsis if needed
@@ -54,6 +59,41 @@ function truncateMessage(message: string | undefined, maxLength: number = 50): s
   }
   
   return `${message.slice(0, maxLength).trim()}...`;
+}
+
+/**
+ * Strips markdown formatting from text
+ * @param text Text with potential markdown syntax
+ * @returns Plain text without markdown formatting
+ */
+function stripMarkdown(text: string | undefined): string {
+  if (!text) return '';
+  
+  return text
+    // Headers
+    .replace(/^#{1,6}\s+/gm, '')
+    // Bold and italic
+    .replace(/[*_]{1,3}(.*?)[*_]{1,3}/g, '$1')
+    // Strikethrough
+    .replace(/~~(.*?)~~/g, '$1')
+    // Code blocks
+    .replace(/```[\s\S]*?```/g, '')
+    // Inline code
+    .replace(/`([^`]+)`/g, '$1')
+    // Lists
+    .replace(/^[\s]*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    // Links
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Images
+    .replace(/!\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Blockquotes
+    .replace(/^>\s+/gm, '')
+    // HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Extra whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -94,6 +134,7 @@ type ConversationGroupProps = {
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
   userMessageCache: Record<string, string>;
+  maxTitleWidth?: string; // Pass down the max width
 };
 
 function ConversationGroup({ 
@@ -102,7 +143,8 @@ function ConversationGroup({
   currentConversationId, 
   onSelectConversation,
   onDeleteConversation,
-  userMessageCache
+  userMessageCache,
+  maxTitleWidth
 }: ConversationGroupProps) {
   // Create a memoized handler for deletion to prevent any potential event bubbling issues
   const handleDelete = useCallback((id: string, e?: React.MouseEvent) => {
@@ -120,11 +162,17 @@ function ConversationGroup({
         
         // Use cached user message first, then fall back to API data
         const cachedMessage = userMessageCache[conv.id];
-        const displayTitle = cachedMessage 
-          ? truncateMessage(cachedMessage)
+        const rawMessage = cachedMessage 
+          ? cachedMessage
           : (!conv.firstMessage || conv.firstMessage.trim() === '') 
             ? 'New conversation...' 
-            : truncateMessage(conv.firstMessage);
+            : conv.firstMessage;
+        
+        // Strip markdown and truncate the message
+        const displayTitle = truncateMessage(stripMarkdown(rawMessage));
+        
+        // Determine max width style
+        const titleStyle = maxTitleWidth ? { maxWidth: maxTitleWidth } : undefined;
         
         return (
           <div key={conv.id} className="group relative mx-2 mb-1 rounded-md hover:bg-zinc-50 overflow-visible">
@@ -134,7 +182,7 @@ function ConversationGroup({
                 ${isCurrentConversation ? 'bg-zinc-100 text-zinc-900 font-medium' : 'text-zinc-600 hover:text-zinc-900'}`}
               onClick={() => onSelectConversation(conv.id)}
             >
-              <div className="truncate max-w-[220px]">{displayTitle}</div>
+              <div className="truncate" style={titleStyle}>{displayTitle}</div>
             </Button>
             
             {/* Always visible on hover, positioned absolutely */}
@@ -206,17 +254,79 @@ export function ChatHistory({
   onSelectConversation, 
   onNewChat, 
   reloadConversations,
-  userMessageCache = {}
+  userMessageCache = {},
+  maxTitleWidth
 }: ChatHistoryProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);  // Set default to true since we load on mount
   const [error, setError] = useState<string | null>(null);
   const previousConversationIds = useRef<Set<string>>(new Set());
 
   /**
-   * Loads conversation list from the API
+   * Checks if the cached data is still valid
    */
-  const loadConversations = useCallback(async (skipLoadingState = false) => {
+  const isCacheValid = useCallback(() => {
+    try {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (!cachedData) return false;
+      
+      const { timestamp, data } = JSON.parse(cachedData);
+      const now = Date.now();
+      
+      return Array.isArray(data) && data.length > 0 && now - timestamp < CACHE_EXPIRY_MS;
+    } catch (error) {
+      console.error('Error checking cache validity:', error);
+      return false;
+    }
+  }, []);
+
+  /**
+   * Gets conversations from cache
+   */
+  const getConversationsFromCache = useCallback((): Conversation[] | null => {
+    try {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (!cachedData) return null;
+      
+      const { data } = JSON.parse(cachedData);
+      return data;
+    } catch (error) {
+      console.error('Error getting conversations from cache:', error);
+      return null;
+    }
+  }, []);
+
+  /**
+   * Saves conversations to cache
+   */
+  const saveConversationsToCache = useCallback((data: Conversation[]) => {
+    try {
+      const cacheData = {
+        timestamp: Date.now(),
+        data
+      };
+      
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+      console.error('Error saving conversations to cache:', error);
+    }
+  }, []);
+
+  /**
+   * Invalidates the cache
+   */
+  const invalidateCache = useCallback(() => {
+    try {
+      localStorage.removeItem(CACHE_KEY);
+    } catch (error) {
+      console.error('Error invalidating cache:', error);
+    }
+  }, []);
+
+  /**
+   * Loads conversation list from the API or cache
+   */
+  const loadConversations = useCallback(async (skipLoadingState = false, forceRefresh = false) => {
     if (!skipLoadingState) {
       setIsLoading(true);
     }
@@ -224,6 +334,27 @@ export function ChatHistory({
     setError(null);
     
     try {
+      // Check cache first if not forcing refresh
+      if (!forceRefresh && isCacheValid()) {
+        const cachedConversations = getConversationsFromCache();
+        if (cachedConversations) {
+          setConversations(cachedConversations);
+          
+          // Update IDs reference
+          const newIds = new Set<string>();
+          cachedConversations.forEach((conv) => {
+            if (conv.id) newIds.add(conv.id);
+          });
+          previousConversationIds.current = newIds;
+          
+          if (!skipLoadingState) {
+            setIsLoading(false);
+          }
+          return;
+        }
+      }
+      
+      // Fetch from API if cache is invalid or we're forcing refresh
       const response = await fetch('/api/chat/conversations');
       
       if (!response.ok) {
@@ -239,6 +370,9 @@ export function ChatHistory({
         if (conv.id) newIds.add(conv.id);
       });
       previousConversationIds.current = newIds;
+      
+      // Save to cache
+      saveConversationsToCache(data);
     } catch (error) {
       console.error('Error loading conversations:', error);
       setError('Failed to load conversations');
@@ -247,7 +381,7 @@ export function ChatHistory({
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [isCacheValid, getConversationsFromCache, saveConversationsToCache]);
 
   /**
    * Handles conversation deletion
@@ -266,26 +400,38 @@ export function ChatHistory({
         onNewChat();
       }
       
-      loadConversations(true);
+      // Invalidate cache after successful deletion
+      invalidateCache();
+      loadConversations(true, true);
     } catch (error) {
       console.error('Error deleting conversation:', error);
       setError('Failed to delete conversation');
     }
-  }, [currentConversationId, onNewChat, loadConversations]);
+  }, [currentConversationId, onNewChat, loadConversations, invalidateCache]);
 
   // Expose loadConversations to parent component
   useEffect(() => {
     if (reloadConversations) {
-      reloadConversations(loadConversations);
+      reloadConversations((skipLoadingState = false) => loadConversations(skipLoadingState, true));
     }
   }, [reloadConversations, loadConversations]);
 
-  // Load conversations when currentConversationId changes
+  // Load conversations only once when component mounts
   useEffect(() => {
-    // Skip loading state if selecting an existing conversation from our list
-    const skipLoadingState = currentConversationId ? previousConversationIds.current.has(currentConversationId) : false;
-    loadConversations(skipLoadingState);
-  }, [currentConversationId, loadConversations]);
+    loadConversations();
+    
+    // Add event listener for storage changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === CACHE_KEY) {
+        loadConversations(true);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [loadConversations]);
 
   // Group conversations by date
   const groupedConversations = groupConversationsByDate(conversations);
@@ -296,7 +442,11 @@ export function ChatHistory({
         <Button 
           variant="outline"
           className="w-full gap-2 text-sm h-9 px-4 bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900 transition-colors rounded-lg shadow-sm" 
-          onClick={onNewChat}
+          onClick={() => {
+            onNewChat();
+            // Force refresh when creating a new chat
+            loadConversations(false, true);
+          }}
           disabled={isLoading}
         >
           <PlusCircle className="h-3.5 w-3.5" />
@@ -311,9 +461,9 @@ export function ChatHistory({
       <ScrollArea className="flex-1 px-1 pb-4">
         <div className="py-2">
           {isLoading ? (
-            <> </>
+            <LoadingState />
           ) : error ? (
-            <ErrorMessage message={error} onRetry={() => loadConversations(false)} />
+            <ErrorMessage message={error} onRetry={() => loadConversations(false, true)} />
           ) : (
             <ConversationList 
               groupedConversations={groupedConversations}
@@ -321,10 +471,28 @@ export function ChatHistory({
               onSelectConversation={onSelectConversation}
               onDeleteConversation={handleDeleteConversation}
               userMessageCache={userMessageCache}
+              maxTitleWidth={maxTitleWidth}
             />
           )}
         </div>
       </ScrollArea>
+    </div>
+  );
+}
+
+/**
+ * Loading state with skeleton UI
+ */
+function LoadingState() {
+  return (
+    <div className="space-y-4 px-3 animate-pulse">
+      <div>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(i => (
+          <div key={i} className="mb-4">
+            <Skeleton className="h-8 w-full rounded-md bg-zinc-100" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -351,18 +519,21 @@ function ConversationList({
   currentConversationId,
   onSelectConversation,
   onDeleteConversation,
-  userMessageCache
+  userMessageCache,
+  maxTitleWidth
 }: {
   groupedConversations: ConversationGroups;
   currentConversationId: string | null;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
   userMessageCache: Record<string, string>;
+  maxTitleWidth?: string;
 }) {
   if (Object.keys(groupedConversations).length === 0) {
     return (
       <div className="text-center py-8 px-4">
         <p className="text-sm text-zinc-400">No conversations yet</p>
+        <p className="text-xs text-zinc-300 mt-1">Start a new chat to begin</p>
       </div>
     );
   }
@@ -377,6 +548,7 @@ function ConversationList({
           onSelectConversation={onSelectConversation}
           onDeleteConversation={onDeleteConversation}
           userMessageCache={userMessageCache}
+          maxTitleWidth={maxTitleWidth}
         />
       )}
       {groupedConversations.yesterday && groupedConversations.yesterday.length > 0 && (
@@ -387,6 +559,7 @@ function ConversationList({
           onSelectConversation={onSelectConversation}
           onDeleteConversation={onDeleteConversation}
           userMessageCache={userMessageCache}
+          maxTitleWidth={maxTitleWidth}
         />
       )}
       {groupedConversations.previousWeek && groupedConversations.previousWeek.length > 0 && (
@@ -397,6 +570,7 @@ function ConversationList({
           onSelectConversation={onSelectConversation}
           onDeleteConversation={onDeleteConversation}
           userMessageCache={userMessageCache}
+          maxTitleWidth={maxTitleWidth}
         />
       )}
       {groupedConversations.older && groupedConversations.older.length > 0 && (
@@ -407,6 +581,7 @@ function ConversationList({
           onSelectConversation={onSelectConversation}
           onDeleteConversation={onDeleteConversation}
           userMessageCache={userMessageCache}
+          maxTitleWidth={maxTitleWidth}
         />
       )}
     </div>

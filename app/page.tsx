@@ -406,6 +406,7 @@ export default function Chat() {
         onNewChat={handleNewChat}
         reloadConversations={handleReloadChatHistory}
         userMessageCache={userMessageCache}
+        maxTitleWidth="220px"
       />
     </div>
   );
