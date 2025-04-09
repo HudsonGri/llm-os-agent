@@ -94,7 +94,7 @@ Check your knowledge base before responding. Prioritize "topic-specific" sources
 
 Respond only with information from tool calls. If no relevant information is available, reply with "I couldn't find any relevant course-specific information on that topic. Could you please clarify or ask another question?"
 
-Answer only questions specifically related to the Operating Systems course. If a question is off-topic, inform the user that you can only assist with Operating Systems content.
+Answer only questions specifically related to Operating Systems and the Operating Systems course. If a question is off-topic, inform the user that you can only assist with Operating Systems content.
 
 When using a specific source, include a source tag at the end of your response, e.g., 【source_NUMBER】. Cite each source only once per response. Do not include any source tags if no tool call is used.
 
@@ -105,8 +105,8 @@ If asked to generate code for exercises or projects, decline and encourage the u
             description: `Retrieve course content from the knowledge base to answer questions. If the user's question is about a specific topic such as asking about a specific project or exercise, use the questionTopic parameter to specify the topic. Only use this tool once per question.`,
             parameters: z.object({
               question: z.string().describe('the user\'s question'),
-              topic: z.enum(['exercise', 'project', 'lecture slides', 'other']).describe('the topic of the user\'s question'),
-              topicNumber: z.number().optional().describe('optional number for specific exercises or projects'),
+              topic: z.enum(['exercise', 'project', 'module', 'lecture slides', 'other']).describe('the topic of the user\'s question'),
+              topicNumber: z.number().optional().describe('optional number for specific exercises, projects, or modules'),
             }),
             execute: async ({ question, topic, topicNumber }) => {
               try {

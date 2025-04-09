@@ -65,6 +65,9 @@ export const findRelevantContent = async (
       topicPattern = `Project ${topicNumber}`;
     } else if (topic === 'lecture slides') {
       topicPattern = `Lecture`;
+    } else if (topic === 'module') {
+      topicPattern = `M${topicNumber < 10 ? `0${topicNumber}` : topicNumber}`;
+      alternativePattern = `M${topicNumber}`;
     }
     
     if (topicPattern) {
