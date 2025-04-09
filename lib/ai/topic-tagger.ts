@@ -1,39 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { tool, generateText } from 'ai';
 import { z } from 'zod';
-
-// Topics based on course structure
-const TOPICS = [
-  "General Question",
-  "Exercise 0",
-  "OS Fundamentals",
-  "Exercise 1",
-  "Project 0",
-  "Processes & Threads",
-  "Exercise 2",
-  "Synchronization",
-  "Exercise 3",
-  "Scheduling",
-  "Exercise 4",
-  "Memory Management",
-  "Exercise 5",
-  "Virtual Memory",
-  "Exercise 6",
-  "Exam 1",
-  "Filesystem Fundamentals",
-  "Exercise 7",
-  "Filesystem Implementation",
-  "Exercise 8",
-  "I/O Devices",
-  "Exercise 9",
-  "Networking",
-  "Project 1",
-  "Project 2",
-  "Deadlock",
-  "Project 3",
-  "Security",
-  "Exam 2"
-];
+import { TOPICS } from '@/lib/topics';
 
 /**
  * Tags a message content with a topic using GPT-4o-mini

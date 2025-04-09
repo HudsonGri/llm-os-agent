@@ -4,35 +4,26 @@ import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
+import { TOPICS } from "@/lib/topics";
 
 export default function ConceptExplorer() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
 
-  // TODO: fetch all (or subset) of possible topic tags and determine what clicking on these topics does
-  // idea: general query such as "Give an overview of <topic> and provide relevant course materials"
-  // hard-coded for now
-  const topics = [
-    'IO Devices',
-    'File Systems',
-    'Networking',
-    'Memory',
-    'Processes & Threads',
-    'OS History',
-    'Scheduling Algorithms',
-    'Interrupts',
-    'Paging',
-    'Security',
-    'Synchronization Problems',
-    'OS Fundamentals',
-  ];
+  const topics = TOPICS.filter(topic => topic !== "General Question" && !topic.startsWith("Exam"));
 
   const filteredTopics = topics.filter((topic) =>
     topic.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleConceptSelect = useCallback((topic: string) => {
-    const prompt = `Please give an overview of ${topic}, provide relevant course resources, and 3 sample questions about ${topic}.`;
+    let prompt: string;
+    if (topic.startsWith("Exercise") || topic.startsWith("Project")) {
+      prompt = `Please provide an overview of ${topic}, include relevant course resources, and list 3 sample next prompt examples related to ${topic}.`;
+    } else {
+      prompt = `Please give an overview of ${topic}, provide relevant course resources, and 3 sample questions about ${topic}.`;
+    }
+
     const newId = crypto.randomUUID();
     document.cookie = `conversationId=${newId}; Path=/`;
     document.cookie = `samplePrompt=${encodeURIComponent(prompt)}; Path=/`;
