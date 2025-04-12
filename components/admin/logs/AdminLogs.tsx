@@ -85,6 +85,7 @@ interface LogEntry {
   userToolInvocations?: ToolInvocation[];
   assistantToolInvocations?: ToolInvocation[];
   rating?: 'up' | 'down' | null;
+  reasoning?: boolean;
 }
 
 export default function AdminLogs() {
@@ -416,6 +417,18 @@ export default function AdminLogs() {
     );
   };
 
+  // Add a badge rendering function for reasoning
+  const renderReasoningBadge = (reasoning?: boolean) => {
+    if (!reasoning) return null;
+    
+    return (
+      <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700 font-medium py-1 px-2.5 flex items-center gap-1">
+        <span className="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
+        Reasoning
+      </Badge>
+    );
+  };
+
   return (
     <div className="flex-1 p-5 flex flex-col gap-5 w-full mx-auto">
       <Card className="border-gray-200">
@@ -662,6 +675,12 @@ export default function AdminLogs() {
                             {log.topic}
                           </Badge>
                         )}
+                        {log.reasoning && (
+                          <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700 font-medium py-1 px-2.5 flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
+                            Reasoning
+                          </Badge>
+                        )}
                         {log.assistantToolInvocations && log.assistantToolInvocations.length > 0 && (
                           <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700 font-medium py-1 px-2.5 flex items-center gap-1">
                             <Wrench size={12} className="mr-1" />
@@ -760,6 +779,14 @@ export default function AdminLogs() {
                               <span className="font-medium text-gray-700">Topic:</span>
                               <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 font-medium py-0.5 px-2">
                                 {log.topic}
+                              </Badge>
+                            </p>
+                          )}
+                          {log.reasoning && (
+                            <p className="flex items-center gap-2">
+                              <span className="font-medium text-gray-700">Reasoning:</span>
+                              <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700 font-medium py-0.5 px-2">
+                                Enabled
                               </Badge>
                             </p>
                           )}

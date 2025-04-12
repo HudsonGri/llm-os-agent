@@ -36,6 +36,7 @@ interface SaveMessageParams {
   tokenCount?: number;
   processingTime?: number;
   messages?: Message[];
+  reasoning?: boolean;
 }
 
 // Constants
@@ -83,7 +84,8 @@ export async function createChatMessage(data: NewChat): Promise<Chat> {
         toolInvocations: data.toolInvocations,
         tokenCount: data.tokenCount,
         processingTime: data.processingTime,
-        topic: data.topic
+        topic: data.topic,
+        reasoning: data.reasoning
       })
       .returning();
     return chat;
@@ -105,6 +107,7 @@ export async function saveMessage({
   tokenCount,
   processingTime,
   messages,
+  reasoning,
 }: SaveMessageParams): Promise<Chat> {
   try {
     const userId = await getUserId();
@@ -162,6 +165,7 @@ export async function saveMessage({
             processingTime: (prevAssistantMessage.processingTime || 0) + (processingTime || 0),
             toolInvocations: transformedToolInvocations,
             topic, // Set the topic in the database
+            reasoning // Store reasoning flag
           })
           .where(eq(chats.id, prevAssistantMessage.id))
           .returning();
@@ -195,6 +199,7 @@ export async function saveMessage({
       tokenCount,
       processingTime,
       topic, // Add the topic to the created message
+      reasoning // Add the reasoning flag
     });
   } catch (error) {
     console.error('Error saving message:', error);

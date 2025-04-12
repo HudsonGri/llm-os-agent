@@ -63,6 +63,7 @@ export async function GET(request: Request) {
           content: chats.content,
           toolInvocations: chats.toolInvocations,
           topic: chats.topic,
+          reasoning: chats.reasoning
         })
         .from(chats)
         .where(
@@ -165,6 +166,7 @@ export async function GET(request: Request) {
           userToolInvocations: userMessage.toolInvocations || [],
           assistantToolInvocations: assistantMessage.toolInvocations || [],
           rating: assistantMessage.rating,
+          reasoning: assistantMessage.reasoning
         };
       }));
 
@@ -221,6 +223,7 @@ export async function GET(request: Request) {
             toolInvocations: chats.toolInvocations,
             topic: chats.topic,
             rating: chats.rating,
+            reasoning: chats.reasoning
           })
           .from(chats)
           .where(
@@ -269,6 +272,7 @@ export async function GET(request: Request) {
           userToolInvocations: log.toolInvocations || [],
           assistantToolInvocations: response?.toolInvocations || [],
           rating: response?.rating || log.rating,
+          reasoning: response?.reasoning
         };
       }));
 

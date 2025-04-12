@@ -1,6 +1,7 @@
 // app/api/chat/route.ts
 import { openai } from '@ai-sdk/openai';
 import { google } from '@ai-sdk/google';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { streamText, tool, smoothStream } from 'ai';
 import { z } from 'zod';
 import { findRelevantContent } from '@/lib/ai/embedding';
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
       );
     }
     
-    const { messages, conversationId: existingConversationId } = requestData;
+    const { messages, conversationId: existingConversationId, reasoning = false } = requestData;
     
     // Validate required fields
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -70,7 +71,8 @@ export async function POST(req: Request) {
           conversationId,
           userIp,
           userAgent,
-          messages: messages
+          messages: messages,
+          reasoning
         });
       } catch (error) {
         console.error('Error saving user message:', error);
@@ -83,11 +85,13 @@ export async function POST(req: Request) {
     const startTime = Date.now();
     let isCompleted = false;
 
+    const openrouter = createOpenRouter({
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
+
     try {
-      const result = streamText({
-        model: openai('gpt-4o'),
-        // model: google('gemini-2.0-flash-lite-preview-02-05'),
-        system: `
+      // Define the base system prompt
+      const baseSystemPrompt = `
 You are a specialized assistant for answering questions about COP4600, Operating Systems.
 
 Check your knowledge base before responding. Prioritize "topic-specific" sources over "general" ones for accurate and relevant information. 
@@ -96,9 +100,25 @@ Respond only with information from tool calls. If no relevant information is ava
 
 Answer only questions specifically related to the Operating Systems course. If a question is off-topic, inform the user that you can only assist with Operating Systems content.
 
-When using a specific source, include a source tag at the end of your response, e.g., 【source_NUMBER】. Cite each source only once per response. Do not include any source tags if no tool call is used.
+When using a specific source, include a source tag at the end of your response, e.g., 【source_NUMBER】. Cite each source only once per response. Do not include any source tags if no tool call is used. An example response would be: "The answer is 42. 【source_1】【source_2】"
 
-If asked to generate code for exercises or projects, decline and encourage the user to attempt it themselves first. Offer troubleshooting assistance thereafter.`,
+If asked to generate code for exercises or projects, decline and encourage the user to attempt it themselves first. Offer troubleshooting assistance thereafter.`;
+
+      // Add reasoning-specific instructions if reasoning is enabled
+      const reasoningPrompt = reasoning 
+        ? `\n\nInclude your reasoning process step by step before providing the final answer. Explicitly explain how you arrived at your conclusion.`
+        : '';
+      
+      // Get the appropriate model based on the reasoning flag
+      const modelName = reasoning 
+        ? process.env.REASONING_MODEL || 'google/gemini-2.5-pro-exp-03-25:free'
+        : process.env.NORMAL_MODEL || 'google/gemini-2.0-flash-exp:free';
+      
+      console.log(`Using model: ${modelName}, reasoning: ${reasoning}`);
+
+      const result = streamText({
+        model: openrouter(modelName),
+        system: baseSystemPrompt + reasoningPrompt,
         messages,
         tools: {
           getInformation: tool({
@@ -155,7 +175,8 @@ If asked to generate code for exercises or projects, decline and encourage the u
               userAgent,
               processingTime: Date.now() - startTime,
               tokenCount: completion.usage?.completionTokens,
-              messages: messages
+              messages: messages,
+              reasoning
             });
           } catch (error) {
             console.error('Error saving assistant message:', error);
