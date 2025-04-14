@@ -47,7 +47,8 @@ import {
   ThumbsUp, 
   User, 
   Wrench,
-  Trash2 
+  Trash2,
+  Download 
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -116,6 +117,9 @@ export default function AdminLogs() {
   
   // State for expanded log entries
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
+
+  // Add a state for export loading
+  const [exporting, setExporting] = useState(false);
 
   // Effect to auto-set search if ID is provided in URL
   useEffect(() => {
@@ -445,6 +449,121 @@ export default function AdminLogs() {
     );
   };
 
+  // Add the exportToCSV function
+  const exportToCSV = useCallback((logs: LogEntry[]) => {
+    // CSV header row
+    const csvHeader = [
+      'ID',
+      'Date/Time',
+      'User ID',
+      'Query',
+      'Response',
+      'Topic',
+      'Conversation ID',
+      'Rating',
+      'Reasoning',
+      'Deleted'
+    ].join(',');
+
+    // Convert each log to a CSV row
+    const csvRows = logs.map(log => {
+      // Escape strings for CSV format
+      const escapeCsvValue = (value: string) => {
+        // If the value contains commas, quotes, or newlines, wrap it in quotes
+        if (value && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+          // Replace double quotes with two double quotes
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value || '';
+      };
+
+      return [
+        escapeCsvValue(log.id),
+        escapeCsvValue(log.dateTime),
+        escapeCsvValue(log.user),
+        escapeCsvValue(log.query),
+        escapeCsvValue(log.response),
+        escapeCsvValue(log.topic),
+        escapeCsvValue(log.conversationId),
+        escapeCsvValue(log.rating || ''),
+        log.reasoning ? 'Yes' : 'No',
+        log.deleted ? 'Yes' : 'No'
+      ].join(',');
+    });
+
+    // Combine header and rows
+    const csvContent = [csvHeader, ...csvRows].join('\n');
+
+    // Create a Blob with the CSV content
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    // Create a temporary download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `chat-logs-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, []);
+
+  // Update the exportAllLogs function to use the exporting state
+  const exportAllLogs = useCallback(async () => {
+    try {
+      // Show loading state
+      setExporting(true);
+      
+      // Build query parameters - similar to fetchLogs but with a high limit
+      const params = new URLSearchParams();
+      
+      // Use a high limit to get more logs at once
+      params.append('limit', '1000');
+      params.append('offset', '0');
+      
+      // Apply current filters
+      if (appliedSearch) {
+        params.append('search', appliedSearch);
+      }
+      
+      if (startDate) {
+        params.append('startDate', startDate.toISOString());
+      }
+      
+      if (endDate) {
+        // Set time to end of day for end date
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        params.append('endDate', endOfDay.toISOString());
+      }
+      
+      if (rating && rating !== 'all') {
+        params.append('rating', rating);
+      }
+      
+      if (targetConversationId) {
+        params.append('conversationId', targetConversationId);
+      }
+      
+      // Fetch logs from API
+      const response = await fetch(`/api/admin/logs?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Export the fetched logs to CSV
+      exportToCSV(data.logs);
+    } catch (error) {
+      console.error('Error exporting logs:', error);
+      setError(error instanceof Error ? error.message : 'An unknown error occurred during export');
+    } finally {
+      setExporting(false);
+    }
+  }, [appliedSearch, startDate, endDate, rating, targetConversationId, exportToCSV]);
+
   return (
     <div className="flex-1 p-5 flex flex-col gap-5 w-full mx-auto">
       <Card className="border-gray-200">
@@ -609,8 +728,29 @@ export default function AdminLogs() {
                 <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Filtered</Badge>
               )}
             </div>
-            <div className="text-sm text-gray-500 font-medium">
-              Showing {logs.length} of {total} logs
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportAllLogs}
+                disabled={loading || exporting}
+                className="flex items-center gap-1.5 text-gray-700 border-gray-300 hover:bg-gray-50"
+              >
+                {exporting ? (
+                  <>
+                    <span className="animate-spin h-4 w-4 mr-1 border-2 border-gray-500 border-t-transparent rounded-full"></span>
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download size={14} />
+                    Export to CSV
+                  </>
+                )}
+              </Button>
+              <span className="text-sm text-gray-500 font-medium">
+                Showing {logs.length} of {total} logs
+              </span>
             </div>
           </div>
         </CardHeader>
