@@ -382,10 +382,11 @@ export default function AdminLogs() {
                   </Badge>
                 )}
               </div>
-              {tool.args && tool.args.topic && (
+              {/* Only show topic if it's not "other" and topicNumber is not 0 */}
+              {tool.args && tool.args.topic && !(tool.args.topic === 'other' && tool.args.topicNumber === 0) && (
               <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                 <Badge variant="secondary" className="bg-gray-100 border-gray-200">
-                  Topic: {tool.args.topic} {tool.args.topicNumber && `#${tool.args.topicNumber}`}
+                  Topic: {tool.args.topic} {tool.args.topicNumber && tool.args.topicNumber > 0 && `#${tool.args.topicNumber}`}
                 </Badge>
               </div>
               )}

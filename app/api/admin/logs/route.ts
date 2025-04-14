@@ -220,6 +220,68 @@ export async function GET(request: Request) {
         .limit(limit)
         .offset(offset);
 
+      // If we have no logs but a specific conversationId was requested,
+      // try again without filtering by role or deleted status
+      if (logs.length === 0 && conversationId) {
+        const specificConversationLogs = await db
+          .select({
+            id: chats.id,
+            conversationId: chats.conversationId,
+            user: chats.userId,
+            userAgent: chats.userAgent,
+            userIp: chats.userIp,
+            content: chats.content,
+            createdAt: chats.createdAt,
+            tokenCount: chats.tokenCount,
+            processingTime: chats.processingTime,
+            toolInvocations: chats.toolInvocations,
+            rating: chats.rating,
+            topic: chats.topic,
+            deleted: chats.deleted,
+            role: chats.role,
+            reasoning: chats.reasoning,
+          })
+          .from(chats)
+          .where(sql`${chats.conversationId} = ${conversationId}`)
+          .orderBy(chats.createdAt)
+          .limit(10);
+
+        // If we found any messages (regardless of role), pick the first user message
+        if (specificConversationLogs.length > 0) {
+          // Try to find a user message
+          const userMessage = specificConversationLogs.find(msg => msg.role === 'user');
+          
+          if (userMessage) {
+            // Use the user message as our log entry
+            const assistantMessage = specificConversationLogs.find(msg => 
+              msg.role === 'assistant' && new Date(msg.createdAt) > new Date(userMessage.createdAt)
+            );
+            
+            return NextResponse.json({
+              logs: [{
+                id: userMessage.id,
+                dateTime: typeof userMessage.createdAt === 'object' ? userMessage.createdAt.toISOString() : String(userMessage.createdAt),
+                user: userMessage.user || 'Anonymous',
+                query: userMessage.content,
+                response: assistantMessage?.content || 'No response found',
+                topic: userMessage.topic || assistantMessage?.topic || '',
+                conversationId: userMessage.conversationId,
+                userAgent: userMessage.userAgent,
+                userIp: userMessage.userIp,
+                userToolInvocations: userMessage.toolInvocations || [],
+                assistantToolInvocations: assistantMessage?.toolInvocations || [],
+                rating: assistantMessage?.rating,
+                reasoning: assistantMessage?.reasoning,
+                deleted: userMessage.deleted || (assistantMessage?.deleted || false),
+              }],
+              total: 1,
+              limit,
+              offset,
+            });
+          }
+        }
+      }
+
       // For each user message, get the corresponding assistant response
       // IMPORTANT: We don't filter by deleted status for assistant messages
       // so we can see deleted responses paired with non-deleted user messages
