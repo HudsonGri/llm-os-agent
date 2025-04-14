@@ -30,7 +30,7 @@ type ContentResult = {
 
 export const findRelevantContent = async (
   userQuery: string, 
-  topic: 'exercise' | 'project' | 'lecture slides' | 'other' = 'other',
+  topic: 'exercise' | 'project' | 'module' | 'other' = 'other',
   topicNumber?: number
 ) => {
   const userQueryEmbedded = await generateEmbedding(userQuery);
@@ -63,18 +63,22 @@ export const findRelevantContent = async (
       alternativePattern = `Ex${topicNumber}`;
     } else if (topic === 'project') {
       topicPattern = `Project ${topicNumber}`;
-    } else if (topic === 'lecture slides') {
-      topicPattern = `Lecture`;
+    } else if (topic === 'module') {
+      topicPattern = `M${topicNumber < 10 ? `0${topicNumber}` : topicNumber}`;
+      alternativePattern = `M${topicNumber}`;
     }
     
     if (topicPattern) {
-      const whereCondition = topic === 'exercise' 
-        ? or(
-            like(resources.filepath, `%${topicPattern}%`),
-            like(resources.filepath, `%${alternativePattern}%`)
-          )
-        : like(resources.filepath, `%${topicPattern}%`);
-      
+      // Define condition based on topic type
+      let whereCondition;
+      if (topic === 'exercise' || topic === 'module') {
+        whereCondition = or(
+          like(resources.filepath, `%${topicPattern}%`),
+          like(resources.filepath, `%${alternativePattern}%`)
+        );
+      } else {
+        whereCondition = like(resources.filepath, `%${topicPattern}%`);
+      }
       const results = await db
         .select({
           name: embeddings.content,

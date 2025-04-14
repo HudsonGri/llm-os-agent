@@ -143,8 +143,8 @@ If asked to generate code for exercises or projects, decline and encourage the u
               description: `Retrieve course content from the knowledge base to answer questions. If the user's question is about a specific topic such as asking about a specific project or exercise, use the questionTopic parameter to specify the topic. Only use this tool once per question.`,
               parameters: z.object({
                 question: z.string().describe('the user\'s question'),
-                topic: z.enum(['exercise', 'project', 'other']).describe('the topic of the user\'s question'),
-                topicNumber: z.number().describe('optional number for specific exercises or projects, if other then this should be 0'),
+                topic: z.enum(['exercise', 'project', 'module', 'other']).describe('the topic of the user\'s question'),
+                topicNumber: z.number().describe('optional number for specific exercises, projects, or modules, if other then this should be 0'),
               }),
               execute: async ({ question, topic, topicNumber }) => {
                 try {
