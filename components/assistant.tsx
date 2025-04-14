@@ -186,9 +186,30 @@ const markdownComponents: Partial<Components> = {
   pre: (() => {
     const PreComponent = ({ children, ...props }: { children?: ReactNode }) => {
       // Extract the code content from the nested structure
-      const codeElement = Array.isArray(children) ? children[0] : children;
-      const codeContent = codeElement?.props?.children?.[0] || '';
-      const language = codeElement?.props?.className?.replace('language-', '') || 'text';
+      const codeElement = React.Children.toArray(children)[0];
+      
+      // Helper function to extract text content recursively
+      const extractTextContent = (node: ReactNode): string => {
+        if (node === null || node === undefined) return '';
+        if (typeof node === 'string') return node;
+        if (typeof node === 'number') return String(node);
+        if (Array.isArray(node)) return node.map(extractTextContent).join('');
+        
+        // Handle React elements
+        if (React.isValidElement(node)) {
+          return extractTextContent(node.props.children);
+        }
+        
+        return '';
+      };
+
+      // Extract language from className (e.g., "language-javascript")
+      const language = React.isValidElement(codeElement) && 
+        typeof codeElement.props.className === 'string' ? 
+        codeElement.props.className.replace('language-', '') : 'text';
+        
+      // Extract the code content
+      const codeContent = extractTextContent(codeElement);
 
       const [copied, setCopied] = React.useState(false);
 
