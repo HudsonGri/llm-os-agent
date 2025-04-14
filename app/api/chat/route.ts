@@ -8,6 +8,7 @@ import { findRelevantContent } from '@/lib/ai/embedding';
 
 import { saveMessage, createConversation } from '@/lib/actions/chats';
 import { headers } from 'next/headers';
+import { wasReasoningEnabled } from '@/lib/actions/chats';
 
 // TODO: Test if this is needed/useful
 export const maxDuration = 30;
@@ -28,10 +29,7 @@ export async function POST(req: Request) {
       );
     }
     
-    const { messages, conversationId: existingConversationId, reasoning = false } = requestData;
-    
-    // Log reasoning flag for debugging
-    console.log(`Processing chat request with reasoning=${reasoning}`);
+    const { messages, conversationId: existingConversationId, reasoning: requestReasoning } = requestData;
     
     // Validate required fields
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -55,6 +53,22 @@ export async function POST(req: Request) {
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
+    
+    // Determine if reasoning should be enabled
+    let reasoning = Boolean(requestReasoning);
+    
+    // For existing conversations, check if reasoning was previously enabled
+    if (existingConversationId && !reasoning) {
+      try {
+        reasoning = await wasReasoningEnabled(existingConversationId);
+        console.log(`Existing conversation found. Previous reasoning status: ${reasoning}`);
+      } catch (error) {
+        console.error('Error checking previous reasoning status:', error);
+      }
+    }
+    
+    // Log reasoning flag for debugging
+    console.log(`Processing chat request with reasoning=${reasoning} (from request: ${Boolean(requestReasoning)})`);
     
     // Get user information
     const userIp = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || '';
@@ -124,7 +138,7 @@ If asked to generate code for exercises or projects, decline and encourage the u
         const result = streamText({
           model: openai(reasoning ? 'o3-mini' : 'gpt-4o-mini-2024-07-18'),
           providerOptions: {
-            openai: reasoning ? { reasoningEffort: 'medium' } : {},
+            openai: reasoning ? { reasoningEffort: 'low' } : {},
           },
           system: baseSystemPrompt,
           messages,

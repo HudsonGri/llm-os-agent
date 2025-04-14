@@ -290,4 +290,20 @@ export async function getConversationStats(conversationId: string): Promise<Conv
     console.error('Error fetching conversation stats:', error);
     throw new Error('Failed to fetch conversation stats');
   }
+}
+
+export async function wasReasoningEnabled(conversationId: string): Promise<boolean> {
+  try {
+    const messages = await db
+      .select({ reasoning: chats.reasoning })
+      .from(chats)
+      .where(eq(chats.conversationId, conversationId));
+    
+    // Return true if any message in the conversation had reasoning enabled
+    return messages.some(m => m.reasoning === true);
+  } catch (error) {
+    console.error('Error checking reasoning status:', error);
+    // Default to false if there's an error
+    return false;
+  }
 } 
