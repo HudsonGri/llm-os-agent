@@ -46,7 +46,8 @@ import {
   ThumbsDown, 
   ThumbsUp, 
   User, 
-  Wrench 
+  Wrench,
+  Trash2 
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -86,6 +87,7 @@ interface LogEntry {
   assistantToolInvocations?: ToolInvocation[];
   rating?: 'up' | 'down' | null;
   reasoning?: boolean;
+  deleted?: boolean;
 }
 
 export default function AdminLogs() {
@@ -141,7 +143,7 @@ export default function AdminLogs() {
       startDate, 
       endDate, 
       rating, 
-      targetConversationId 
+      targetConversationId
     });
     
     setLoading(true);
@@ -180,6 +182,7 @@ export default function AdminLogs() {
         if (rating && rating !== 'all') {
           params.append('rating', rating);
         }
+        
       }
       
       // Fetch logs from API
@@ -429,6 +432,18 @@ export default function AdminLogs() {
     );
   };
 
+  // Add a badge rendering function for deleted messages
+  const renderDeletedBadge = (deleted?: boolean) => {
+    if (!deleted) return null;
+    
+    return (
+      <Badge variant="outline" className="bg-gray-50 border-gray-200 text-gray-700 font-medium py-1 px-2.5 flex items-center gap-1">
+        <Trash2 size={12} className="text-gray-600" />
+        Deleted
+      </Badge>
+    );
+  };
+
   return (
     <div className="flex-1 p-5 flex flex-col gap-5 w-full mx-auto">
       <Card className="border-gray-200">
@@ -534,7 +549,7 @@ export default function AdminLogs() {
                 </SelectContent>
               </Select>
             </div>
-      </div>
+          </div>
 
           {(appliedSearch || startDate || endDate || (rating && rating !== 'all')) && (
             <div className="mt-5 flex flex-wrap items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
@@ -647,7 +662,8 @@ export default function AdminLogs() {
                     "border overflow-hidden transition-all duration-300",
                     expandedLog === log.id ? "border-blue-300 shadow-sm ring-1 ring-blue-200" : "border-gray-200 hover:border-gray-300 hover:shadow-sm", 
                     log.conversationId === targetConversationId ? "bg-blue-50 shadow-md" : "",
-                    log.rating === 'up' ? "border-l-4 border-l-green-400" : log.rating === 'down' ? "border-l-4 border-l-red-400" : ""
+                    log.rating === 'up' ? "border-l-4 border-l-green-400" : log.rating === 'down' ? "border-l-4 border-l-red-400" : "",
+                    log.deleted ? "opacity-75 border-dashed" : ""
                   )}
                   data-conversation-id={log.conversationId}
                   tabIndex={log.conversationId === targetConversationId ? 0 : undefined}
@@ -679,6 +695,12 @@ export default function AdminLogs() {
                           <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700 font-medium py-1 px-2.5 flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
                             Reasoning
+                          </Badge>
+                        )}
+                        {log.deleted && (
+                          <Badge variant="outline" className="bg-gray-50 border-gray-200 text-gray-700 font-medium py-1 px-2.5 flex items-center gap-1">
+                            <Trash2 size={12} className="text-gray-600" />
+                            Deleted
                           </Badge>
                         )}
                         {log.assistantToolInvocations && log.assistantToolInvocations.length > 0 && (
@@ -787,6 +809,15 @@ export default function AdminLogs() {
                               <span className="font-medium text-gray-700">Reasoning:</span>
                               <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700 font-medium py-0.5 px-2">
                                 Enabled
+                              </Badge>
+                            </p>
+                          )}
+                          {log.deleted && (
+                            <p className="flex items-center gap-2">
+                              <span className="font-medium text-gray-700">Status:</span>
+                              <Badge variant="outline" className="bg-gray-50 border-gray-200 text-gray-700 font-medium py-0.5 px-2 flex items-center gap-1">
+                                <Trash2 size={12} className="text-gray-600" />
+                                Deleted
                               </Badge>
                             </p>
                           )}

@@ -15,45 +15,50 @@ export async function GET(request: Request) {
     const endDateParam = searchParams.get('endDate');
     const rating = searchParams.get('rating');
     const conversationId = searchParams.get('conversationId');
-
+    
     // Build query filters for user messages
-    let userFilters = [];
+    const userFilters = [];
     
     // Search filter
     if (search) {
-      userFilters.push(
-        or(
-          like(chats.content, `%${search}%`),
-          like(chats.userId, `%${search}%`),
-          like(chats.conversationId, `%${search}%`)
-        )
-      );
+      userFilters.push(sql`(
+        ${chats.content} LIKE ${'%' + search + '%'} OR
+        ${chats.userId} LIKE ${'%' + search + '%'} OR
+        ${chats.conversationId} LIKE ${'%' + search + '%'}
+      )`);
     }
     
     // Date range filter - using prepared statements with string literals
     if (startDateParam) {
-      // safer way to handle date strings in SQL
       userFilters.push(sql`${chats.createdAt} >= ${startDateParam}`);
     }
     
     if (endDateParam) {
-      // safer way to handle date strings in SQL
       userFilters.push(sql`${chats.createdAt} <= ${endDateParam}`);
     }
     
     // Conversation ID filter
     if (conversationId) {
-      userFilters.push(eq(chats.conversationId, conversationId));
+      userFilters.push(sql`${chats.conversationId} = ${conversationId}`);
     }
     
     // Only fetch user queries (not system or assistant responses)
-    userFilters.push(eq(chats.role, 'user'));
+    userFilters.push(sql`${chats.role} = 'user'`);
 
     // First, we need to approach this differently if rating is specified
     // Since ratings are on assistant messages, we need to find all assistant messages with the rating
     // then fetch their corresponding user messages
     if (rating && rating !== 'all') {
       // Step 1: Find all assistant messages with the specified rating
+      const ratingFilters = [];
+      ratingFilters.push(sql`${chats.role} = 'assistant'`);
+      
+      if (rating === 'none') {
+        ratingFilters.push(sql`${chats.rating} IS NULL`);
+      } else if (rating === 'up' || rating === 'down') {
+        ratingFilters.push(sql`${chats.rating} = ${rating}`);
+      }
+      
       const ratedMessagesQuery = db
         .select({
           id: chats.id,
@@ -63,15 +68,13 @@ export async function GET(request: Request) {
           content: chats.content,
           toolInvocations: chats.toolInvocations,
           topic: chats.topic,
-          reasoning: chats.reasoning
+          reasoning: chats.reasoning,
+          deleted: chats.deleted
         })
         .from(chats)
-        .where(
-          and(
-            eq(chats.role, 'assistant'),
-            rating === 'none' ? sql`${chats.rating} IS NULL` : rating === 'up' || rating === 'down' ? eq(chats.rating, rating as 'up' | 'down') : undefined
-          )
-        )
+        .where(ratingFilters.length === 1 
+          ? ratingFilters[0] 
+          : sql`${ratingFilters[0]} AND ${ratingFilters[1]}`)
         .orderBy(desc(chats.createdAt))
         .limit(limit)
         .offset(offset);
@@ -93,16 +96,24 @@ export async function GET(request: Request) {
       const [{ count }] = await db
         .select({ count: sql`count(*)`.mapWith(Number) })
         .from(chats)
-        .where(
-          and(
-            eq(chats.role, 'assistant'),
-            rating === 'none' ? sql`${chats.rating} IS NULL` : rating === 'up' || rating === 'down' ? eq(chats.rating, rating as 'up' | 'down') : undefined
-          )
-        );
+        .where(ratingFilters.length === 1 
+          ? ratingFilters[0] 
+          : sql`${ratingFilters[0]} AND ${ratingFilters[1]}`);
       
       // For each rated assistant message, find the preceding user message
       const logsWithResponses = await Promise.all(ratedMessages.map(async (assistantMessage) => {
         // Find the user message that preceded this assistant message
+        const userQueryFilters = [];
+        userQueryFilters.push(sql`${chats.conversationId} = ${assistantMessage.conversationId}`);
+        userQueryFilters.push(sql`${chats.role} = 'user'`);
+        userQueryFilters.push(sql`${chats.createdAt} < ${typeof assistantMessage.createdAt === 'object' 
+          ? assistantMessage.createdAt.toISOString() 
+          : String(assistantMessage.createdAt)}`);
+        
+        const userMessageQuery = userQueryFilters.length <= 1 
+          ? userQueryFilters[0] 
+          : sql`${userQueryFilters[0]} AND ${userQueryFilters[1]} AND ${userQueryFilters[2]}`;
+        
         const [userMessage] = await db
           .select({
             id: chats.id,
@@ -116,17 +127,10 @@ export async function GET(request: Request) {
             processingTime: chats.processingTime,
             toolInvocations: chats.toolInvocations,
             topic: chats.topic,
+            deleted: chats.deleted,
           })
           .from(chats)
-          .where(
-            and(
-              eq(chats.conversationId, assistantMessage.conversationId),
-              eq(chats.role, 'user'),
-              sql`${chats.createdAt} < ${typeof assistantMessage.createdAt === 'object' 
-                ? assistantMessage.createdAt.toISOString() 
-                : String(assistantMessage.createdAt)}`
-            )
-          )
+          .where(userMessageQuery)
           .orderBy(desc(chats.createdAt))
           .limit(1);
 
@@ -166,7 +170,8 @@ export async function GET(request: Request) {
           userToolInvocations: userMessage.toolInvocations || [],
           assistantToolInvocations: assistantMessage.toolInvocations || [],
           rating: assistantMessage.rating,
-          reasoning: assistantMessage.reasoning
+          reasoning: assistantMessage.reasoning,
+          deleted: userMessage.deleted || assistantMessage.deleted,
         };
       }));
 
@@ -181,11 +186,16 @@ export async function GET(request: Request) {
       });
     } else {
       // Original flow for when rating is not specified
+      // Create the SQL query combining all user filters
+      const userQuery = userFilters.length <= 1 
+        ? userFilters[0] 
+        : sql`${userFilters.join(' AND ')}`;
+      
       // Get total count for pagination
       const [{ count }] = await db
         .select({ count: sql`count(*)`.mapWith(Number) })
         .from(chats)
-        .where(userFilters.length ? and(...userFilters) : undefined);
+        .where(userQuery);
 
       // Fetch data with pagination
       const logs = await db
@@ -202,18 +212,29 @@ export async function GET(request: Request) {
           toolInvocations: chats.toolInvocations,
           rating: chats.rating,
           topic: chats.topic,
+          deleted: chats.deleted,
         })
         .from(chats)
-        .where(userFilters.length ? and(...userFilters) : undefined)
+        .where(userQuery)
         .orderBy(desc(chats.createdAt))
         .limit(limit)
         .offset(offset);
 
       // For each user message, get the corresponding assistant response
+      // IMPORTANT: We don't filter by deleted status for assistant messages
+      // so we can see deleted responses paired with non-deleted user messages
       const logsWithResponses = await Promise.all(logs.map(async (log) => {
         const createdAtStr = typeof log.createdAt === 'object' 
           ? log.createdAt.toISOString() 
           : String(log.createdAt);
+          
+        // Only filter by conversation, role and creation time
+        // Note: We do not filter by deleted status here
+        const assistantQuery = sql`
+          ${chats.conversationId} = ${log.conversationId} AND
+          ${chats.role} = 'assistant' AND
+          ${chats.createdAt} > ${createdAtStr}
+        `;
           
         const [response] = await db
           .select({
@@ -223,16 +244,11 @@ export async function GET(request: Request) {
             toolInvocations: chats.toolInvocations,
             topic: chats.topic,
             rating: chats.rating,
-            reasoning: chats.reasoning
+            reasoning: chats.reasoning,
+            deleted: chats.deleted,
           })
           .from(chats)
-          .where(
-            and(
-              eq(chats.conversationId, log.conversationId),
-              eq(chats.role, 'assistant'),
-              sql`${chats.createdAt} > ${createdAtStr}`
-            )
-          )
+          .where(assistantQuery)
           .orderBy(chats.createdAt)
           .limit(1);
 
@@ -272,7 +288,8 @@ export async function GET(request: Request) {
           userToolInvocations: log.toolInvocations || [],
           assistantToolInvocations: response?.toolInvocations || [],
           rating: response?.rating || log.rating,
-          reasoning: response?.reasoning
+          reasoning: response?.reasoning,
+          deleted: log.deleted || (response?.deleted || false),
         };
       }));
 

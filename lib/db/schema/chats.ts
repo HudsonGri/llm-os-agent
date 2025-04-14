@@ -19,6 +19,9 @@ const chatsSchema = {
   
   // Reasoning flag
   reasoning: boolean('reasoning'), // Track if reasoning was enabled for this message
+
+  // Deleted flag
+  deleted: boolean('deleted').default(false),
   
   // Tool invocations and results
   toolInvocations: jsonb('tool_invocations').$type<Array<{

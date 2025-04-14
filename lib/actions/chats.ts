@@ -7,6 +7,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { cookies } from 'next/headers';
 import { Message } from 'ai';
 import { tagMessageContent } from '@/lib/ai/topic-tagger';
+import { sql } from 'drizzle-orm';
 
 // Types
 type MessageRole = 'user' | 'assistant' | 'system' | 'data';
@@ -209,12 +210,13 @@ export async function saveMessage({
 
 export async function getConversationMessages(conversationId: string): Promise<Chat[]> {
   try {
-    const messages = await db
-      .select()
-      .from(chats)
-      .where(eq(chats.conversationId, conversationId))
-      .orderBy(asc(chats.createdAt));
-    return messages as Chat[];
+    // Use raw SQL to also filter out deleted messages
+    const result = await db.execute(
+      sql`SELECT * FROM chats WHERE conversation_id = ${conversationId} AND (deleted IS NULL OR deleted = false) ORDER BY created_at ASC`
+    );
+    
+    // The result from db.execute() is the array of rows directly
+    return result as unknown as Chat[];
   } catch (error) {
     console.error('Error fetching conversation messages:', error);
     throw new Error('Failed to fetch conversation messages');
