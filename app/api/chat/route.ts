@@ -136,7 +136,7 @@ If asked to generate code for exercises or projects, decline and encourage the u
 
       try {
         const result = streamText({
-          model: openai(reasoning ? 'o3-mini' : 'gpt-4o-mini-2024-07-18'),
+          model: openai(reasoning ? 'o3-mini' : 'gpt-4.1-mini'),
           providerOptions: {
             openai: reasoning ? { reasoningEffort: 'low' } : {},
           },
