@@ -1,5 +1,4 @@
 import { openai } from '@ai-sdk/openai';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { tool, generateText } from 'ai';
 import { z } from 'zod';
 
@@ -42,17 +41,11 @@ const TOPICS = [
  */
 export async function tagMessageContent(content: string): Promise<{ topic: string }> {
 
-  const openrouter = createOpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY,
-  });
-
-  const modelName = process.env.NORMAL_MODEL || 'google/gemini-2.0-flash-exp:free';
 
   try {
     // Use a lightweight model to classify the message
     const result = await generateText({
-      // model: openai('gpt-4o-mini-2024-07-18'),
-      model: openrouter(modelName),
+      model: openai('gpt-4o-mini-2024-07-18'),
       system: `You are a message classifier that assigns the most appropriate topic tag to messages.
       Choose the single most appropriate topic from this list: ${TOPICS.join(', ')}.
       If none match well, use "General Question". Response should be just the topic name, nothing else.`,
