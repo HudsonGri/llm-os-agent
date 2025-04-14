@@ -303,7 +303,7 @@ function SimilarSources({ sources, citedSourceNumbers }: SimilarSourcesProps) {
             className="absolute left-0 top-full mt-1 min-w-[18rem] max-w-[32rem] z-10"
           >
             <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
-              <ScrollArea className="max-h-[200px]">
+              <ScrollArea className="max-h-[200px] overflow-y-auto">
                 <div className="p-1 space-y-1">
                   {uncitedSources.map((source, index) => (
                     <motion.div

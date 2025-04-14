@@ -30,6 +30,7 @@ interface LogItemResponse {
   userToolInvocations?: any[];
   assistantToolInvocations?: any[];
   rating?: string | null;
+  reasoning?: boolean;
 }
 
 // Interface for our component state
@@ -43,6 +44,7 @@ interface LogItem {
   rating?: string | null;
   messageCount?: number;
   conversationId: string;
+  reasoning?: boolean;
 }
 
 // Format date to show full time for recent messages
@@ -136,6 +138,7 @@ export default function RecentLogs() {
             formattedDate,
             rating: mostRecentLog.rating,
             messageCount,
+            reasoning: mostRecentLog.reasoning
           });
         });
         
@@ -182,6 +185,17 @@ export default function RecentLogs() {
     }
     
     return null;
+  };
+
+  // Add this new function to render the reasoning badge
+  const renderReasoningBadge = (reasoning?: boolean) => {
+    if (!reasoning) return null;
+    
+    return (
+      <Badge variant="outline" className="text-xs py-0 h-5 bg-yellow-50 text-yellow-700 border-yellow-200">
+        <span className="h-1.5 w-1.5 rounded-full bg-yellow-500 mr-0.5"></span>
+      </Badge>
+    );
   };
   
   if (loading) {
@@ -302,6 +316,7 @@ export default function RecentLogs() {
                     
                     <div className="flex items-center gap-1">
                       {renderRating(log.rating)}
+                      {renderReasoningBadge(log.reasoning)}
                       
                       <Badge variant="outline" className="text-xs py-0 h-5 bg-gray-50 border-gray-200">
                         <MessageSquare className="h-2.5 w-2.5 mr-0.5" />

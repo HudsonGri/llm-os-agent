@@ -20,6 +20,7 @@ export async function GET(request: Request) {
           ${chats.topic} as "topic",
           ${chats.createdAt} as "createdAt",
           ${chats.rating} as "rating",
+          ${chats.reasoning} as "reasoning",
           ROW_NUMBER() OVER (PARTITION BY ${chats.conversationId} ORDER BY ${chats.createdAt} ASC) as rn
         FROM ${chats}
         WHERE ${chats.role} = 'user'
@@ -28,7 +29,8 @@ export async function GET(request: Request) {
         "conversationId" as id,
         "topic",
         "createdAt" as timestamp,
-        "rating"
+        "rating",
+        "reasoning"
       FROM ranked_chats
       WHERE rn = 1
       ORDER BY "createdAt" DESC
@@ -56,7 +58,8 @@ export async function GET(request: Request) {
         topic: log.topic || 'General Question',
         timestamp: log.timestamp ? new Date(log.timestamp).toISOString() : null,
         formattedDate,
-        rating: log.rating // Keep as string 'up' or 'down'
+        rating: log.rating, // Keep as string 'up' or 'down'
+        reasoning: log.reasoning
       };
     });
     

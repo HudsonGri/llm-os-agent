@@ -36,6 +36,27 @@
       "when": 1743471302529,
       "tag": "0004_magenta_kid_colt",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1744151541324,
+      "tag": "0005_jittery_preak",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1744154239514,
+      "tag": "0006_overrated_omega_flight",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1744496626569,
+      "tag": "0007_lumpy_shape",
+      "breakpoints": true
     }
   ]
 }

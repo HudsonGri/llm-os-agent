@@ -59,7 +59,7 @@ export default function About() {
             <section className="mb-8">
               <h2 className="text-2xl font-medium mb-4 text-zinc-800 pb-2 border-b border-zinc-200">How It Works</h2>
               <p className="text-zinc-600 mb-4 text-lg">
-                Students can chat with the agent through a simple interface embedded right inside their course's Canvas page. The chatbot runs on <strong>GPT-4o</strong> and <strong>Gemini 2.0 Flash</strong>, combining the strengths of multiple advanced AI models, and is trained on lecture slides, PDFs, and other course content. That means responses are actually relevant to what's being taught, not just generic answers.
+                Students can chat with the agent through a simple interface embedded right inside their course's Canvas page. The chatbot uses several frontier models from <strong>OpenAI</strong>, <strong>Anthropic</strong>, and <strong>Google</strong>, combining the strengths of multiple advanced AI models, and is trained on lecture slides, PDFs, and other course content. That means responses are actually relevant to what's being taught, not just generic answers.
               </p>
               <p className="text-zinc-600 mb-4 text-lg">
                 Everything is fully automated and synced with <strong>Canvas LMS</strong>. Course content is pulled directly from Canvas using its API, so there's no manual uploading or refreshing needed. As the course updates, so does the AI.

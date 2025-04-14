@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, jsonb, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, jsonb, varchar, boolean } from 'drizzle-orm/pg-core';
 import { createId } from '@paralleldrive/cuid2';
 import { sql } from 'drizzle-orm';
 
@@ -16,6 +16,12 @@ const chatsSchema = {
   
   // Topic classification
   topic: text('topic'), // New column for message topic classification
+  
+  // Reasoning flag
+  reasoning: boolean('reasoning'), // Track if reasoning was enabled for this message
+
+  // Deleted flag
+  deleted: boolean('deleted').default(false),
   
   // Tool invocations and results
   toolInvocations: jsonb('tool_invocations').$type<Array<{

@@ -26,20 +26,26 @@ export async function GET() {
 
     try {
       // First, get all unique conversation IDs with their earliest message
-      const conversations = await db
-        .select({
-          id: chats.conversationId,
-          firstMessage: sql<string>`MIN(${chats.content})`,
-          timestamp: sql<string>`MIN(${chats.createdAt})`,
-        })
-        .from(chats)
-        .where(eq(chats.userId, userId))
-        .groupBy(chats.conversationId)
-        .orderBy(sql`MIN(${chats.createdAt}) DESC`);
+      // Also add condition to only include conversations where not all messages are deleted
+      const conversations = await db.execute(
+        sql`SELECT 
+          c.conversation_id as id, 
+          MIN(c.content) as first_message, 
+          MIN(c.created_at) as timestamp
+        FROM chats c
+        WHERE c.user_id = ${userId}
+        AND EXISTS (
+          SELECT 1 FROM chats 
+          WHERE conversation_id = c.conversation_id 
+          AND (deleted IS NULL OR deleted = false)
+        )
+        GROUP BY c.conversation_id
+        ORDER BY MIN(c.created_at) DESC`
+      );
 
-      const formattedConversations = conversations.map(conv => ({
+      const formattedConversations = (conversations as any[]).map(conv => ({
         id: conv.id,
-        firstMessage: conv.firstMessage.slice(0, 100),
+        firstMessage: conv.first_message?.slice(0, 100),
         timestamp: conv.timestamp,
       }));
 

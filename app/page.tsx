@@ -61,6 +61,7 @@ export default function Chat() {
   const [reloadChatHistory, setReloadChatHistory] = React.useState<((skipLoadingState?: boolean) => Promise<void>) | null>(null);
   const [userMessageCache, setUserMessageCache] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [reasoningEnabled, setReasoningEnabled] = useState<boolean>(false);
 
   // Create a new conversation ID
   const createNewConversation = useCallback(() => {
@@ -183,7 +184,7 @@ export default function Chat() {
   }, [reload]);
 
   // Wrapper for handleSubmit to ensure new conversations appear in history
-  const handleSubmitWithHistoryReload = useCallback((e: React.FormEvent) => {
+  const handleSubmitWithHistoryReload = useCallback((e: React.FormEvent, reasoning?: boolean) => {
     // Clear any previous error
     setErrorMessage(null);
 
@@ -191,8 +192,10 @@ export default function Chat() {
     const userMessage = input.trim();
     if (!userMessage) return;
 
-    // Submit the message
-    handleSubmit(e);
+    // Submit the message with reasoning
+    handleSubmit(e, { 
+      body: { conversationId, reasoning } 
+    });
 
     // Store user message in the cache for immediate display
     if (conversationId) {
@@ -249,13 +252,15 @@ export default function Chat() {
 
     // Different handling for first message vs follow-up
     if (messages.length === 0 && reloadChatHistory) {
-      handleSubmit(fakeEvent);
+      handleSubmit(fakeEvent, {
+        body: { conversationId, reasoning: reasoningEnabled }
+      });
       reloadChatHistory(true);
       setTimeout(() => reloadChatHistory(true), 1000);
     } else {
-      handleSubmitWithHistoryReload(fakeEvent);
+      handleSubmitWithHistoryReload(fakeEvent, reasoningEnabled);
     }
-  }, [conversationId, handleInputChange, handleSubmit, handleSubmitWithHistoryReload, messages.length, reloadChatHistory]);
+  }, [conversationId, handleInputChange, handleSubmit, handleSubmitWithHistoryReload, messages.length, reloadChatHistory, reasoningEnabled]);
 
   // Function to receive the reload function from ChatHistory
   const handleReloadChatHistory = useCallback((reloadFn: (skipLoadingState?: boolean) => Promise<void>) => {
@@ -320,6 +325,8 @@ export default function Chat() {
                     isLoading={isLoading}
                     stop={stop}
                     variant="empty"
+                    reasoningEnabled={reasoningEnabled}
+                    onReasoningChange={setReasoningEnabled}
                   />
                 </div>
 
@@ -396,6 +403,8 @@ export default function Chat() {
               handleSubmit={handleSubmitWithHistoryReload}
               isLoading={isLoading}
               stop={stop}
+              reasoningEnabled={reasoningEnabled}
+              onReasoningChange={setReasoningEnabled}
             />
           </>
         )}

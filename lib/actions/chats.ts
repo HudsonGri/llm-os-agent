@@ -7,6 +7,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { cookies } from 'next/headers';
 import { Message } from 'ai';
 import { tagMessageContent } from '@/lib/ai/topic-tagger';
+import { sql } from 'drizzle-orm';
 
 // Types
 type MessageRole = 'user' | 'assistant' | 'system' | 'data';
@@ -36,6 +37,7 @@ interface SaveMessageParams {
   tokenCount?: number;
   processingTime?: number;
   messages?: Message[];
+  reasoning?: boolean;
 }
 
 // Constants
@@ -83,7 +85,8 @@ export async function createChatMessage(data: NewChat): Promise<Chat> {
         toolInvocations: data.toolInvocations,
         tokenCount: data.tokenCount,
         processingTime: data.processingTime,
-        topic: data.topic
+        topic: data.topic,
+        reasoning: data.reasoning
       })
       .returning();
     return chat;
@@ -105,6 +108,7 @@ export async function saveMessage({
   tokenCount,
   processingTime,
   messages,
+  reasoning,
 }: SaveMessageParams): Promise<Chat> {
   try {
     const userId = await getUserId();
@@ -162,6 +166,7 @@ export async function saveMessage({
             processingTime: (prevAssistantMessage.processingTime || 0) + (processingTime || 0),
             toolInvocations: transformedToolInvocations,
             topic, // Set the topic in the database
+            reasoning // Store reasoning flag
           })
           .where(eq(chats.id, prevAssistantMessage.id))
           .returning();
@@ -195,6 +200,7 @@ export async function saveMessage({
       tokenCount,
       processingTime,
       topic, // Add the topic to the created message
+      reasoning // Add the reasoning flag
     });
   } catch (error) {
     console.error('Error saving message:', error);
@@ -204,12 +210,13 @@ export async function saveMessage({
 
 export async function getConversationMessages(conversationId: string): Promise<Chat[]> {
   try {
-    const messages = await db
-      .select()
-      .from(chats)
-      .where(eq(chats.conversationId, conversationId))
-      .orderBy(asc(chats.createdAt));
-    return messages as Chat[];
+    // Use raw SQL to also filter out deleted messages
+    const result = await db.execute(
+      sql`SELECT * FROM chats WHERE conversation_id = ${conversationId} AND (deleted IS NULL OR deleted = false) ORDER BY created_at ASC`
+    );
+    
+    // The result from db.execute() is the array of rows directly
+    return result as unknown as Chat[];
   } catch (error) {
     console.error('Error fetching conversation messages:', error);
     throw new Error('Failed to fetch conversation messages');
@@ -284,5 +291,21 @@ export async function getConversationStats(conversationId: string): Promise<Conv
   } catch (error) {
     console.error('Error fetching conversation stats:', error);
     throw new Error('Failed to fetch conversation stats');
+  }
+}
+
+export async function wasReasoningEnabled(conversationId: string): Promise<boolean> {
+  try {
+    const messages = await db
+      .select({ reasoning: chats.reasoning })
+      .from(chats)
+      .where(eq(chats.conversationId, conversationId));
+    
+    // Return true if any message in the conversation had reasoning enabled
+    return messages.some(m => m.reasoning === true);
+  } catch (error) {
+    console.error('Error checking reasoning status:', error);
+    // Default to false if there's an error
+    return false;
   }
 } 

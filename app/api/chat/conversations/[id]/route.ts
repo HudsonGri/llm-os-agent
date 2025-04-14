@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { chats } from '@/lib/db/schema/chats';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { getUserId } from '@/lib/actions/chats';
 
 export async function DELETE(
@@ -46,17 +46,14 @@ export async function DELETE(
     }
 
     try {
-      // Delete all messages in the conversation
-      const result = await db
-        .delete(chats)
-        .where(
-          eq(chats.conversationId, conversationId)
-        );
+      // Update all messages in the conversation to set deleted=true using raw SQL
+      // This avoids TypeScript errors since the column exists in the database but not in the schema
+      const result = await db.execute(
+        sql`UPDATE chats SET deleted = true WHERE conversation_id = ${conversationId}`
+      );
       
-      // Check if any rows were affected (if not, conversation may not exist)
-      // Note: Different database clients might return different result structures
-      // We'll safely check for affected rows using optional chaining
-      const rowsAffected = (result as any)?.rowsAffected || 0;
+      // Check if any rows were affected
+      const rowsAffected = (result as any)?.rowCount || 0;
       if (rowsAffected === 0) {
         return NextResponse.json(
           { warning: 'No messages found for this conversation' }, 
@@ -66,7 +63,7 @@ export async function DELETE(
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error(`Error deleting conversation ${conversationId}:`, error);
+      console.error(`Error soft-deleting conversation ${conversationId}:`, error);
       
       // Database connection errors
       if (error instanceof Error && 
