@@ -8,57 +8,56 @@ export async function GET(request: Request) {
     const conversationId = searchParams.get('conversationId');
 
     if (!conversationId) {
-      return NextResponse.json(
-        { error: 'Missing conversationId parameter' }, 
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing conversationId parameter' }, { status: 400 });
     }
 
-    // Validate conversationId format (assuming UUID format)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(conversationId)) {
-      return NextResponse.json(
-        { error: 'Invalid conversationId format' }, 
-        { status: 400 }
-      );
+    // Validate UUID format
+    if (!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(conversationId)) {
+      return NextResponse.json({ error: 'Invalid conversationId format' }, { status: 400 });
     }
 
-    try {
-      const messages = await getConversationMessages(conversationId);
+    const messages = await getConversationMessages(conversationId);
+    
+    // Transform messages to match the AI SDK's format
+    const formattedMessages = messages.map(msg => {
+      // Type assertion to access possible non-standard field names
+      const rawMsg = msg as any;
       
-      // Transform messages to match the AI SDK's format
-      const formattedMessages = messages.map(msg => {
-        // Ensure tool invocations have the required fields
-        const toolInvocations = msg.toolInvocations ? msg.toolInvocations.map((tool: any, index: number) => ({
-          toolName: tool.toolName || 'unknown',
-          toolCallId: tool.toolCallId || `call_${crypto.randomUUID().replace(/-/g, '')}`,
-          state: tool.state || 'result',
-          step: tool.step !== undefined ? tool.step : index,
-          args: tool.args || {},
-          result: tool.result
-        })) : [];
+      // Process tool invocations from either field name
+      let invocations = msg.toolInvocations || [];
+      
+      // If data is in snake_case format
+      if (!invocations.length && rawMsg.tool_invocations) {
+        const rawInvocations = rawMsg.tool_invocations;
+        invocations = typeof rawInvocations === 'string' 
+          ? JSON.parse(rawInvocations) 
+          : rawInvocations;
+      }
+      
+      // Normalize tool invocations format
+      const toolInvocations = invocations.map((tool: any, index: number) => ({
+        toolName: tool.toolName || 'unknown',
+        toolCallId: tool.toolCallId || `call_${crypto.randomUUID().replace(/-/g, '')}`,
+        state: tool.state || 'result',
+        step: tool.step ?? index,
+        args: tool.args || {},
+        result: tool.result
+      }));
 
-        return {
-          id: msg.id,
-          role: msg.role,
-          content: msg.content,
-          rating: msg.rating,
-          toolInvocations: toolInvocations,
-        };
-      });
+      return {
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        rating: msg.rating,
+        toolInvocations,
+      };
+    });
 
-      return NextResponse.json(formattedMessages);
-    } catch (error) {
-      console.error('Error getting conversation history:', error);
-      return NextResponse.json(
-        { error: 'Failed to get conversation history' }, 
-        { status: 500 }
-      );
-    }
+    return NextResponse.json(formattedMessages);
   } catch (error) {
-    console.error('Unhandled error in chat history API:', error);
+    console.error('Error in chat history API:', error);
     return NextResponse.json(
-      { error: 'An unexpected error occurred' }, 
+      { error: 'Failed to retrieve conversation history' }, 
       { status: 500 }
     );
   }
