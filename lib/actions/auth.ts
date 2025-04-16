@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { v4 as uuidv4 } from 'uuid';
 import { eq, and, gte, lt } from 'drizzle-orm';
 import { db } from '@/lib/db';
@@ -51,12 +51,24 @@ export async function validateAccessCode(code: string) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
     
+    // Get the request headers
+    const headersList = headers();
+    
+    // Get the user agent
+    const userAgent = headersList.get('user-agent') || 'Unknown';
+    
+    // Get the IP address
+    const forwardedFor = headersList.get('x-forwarded-for');
+    const ipAddress = forwardedFor ? forwardedFor.split(',')[0].trim() : 
+                      headersList.get('x-real-ip') || 
+                      '127.0.0.1';
+    
     await db.insert(sessions).values({
       sessionToken,
       accessCodeId: validCode.id,
       expiresAt,
-      ipAddress: '127.0.0.1', // In a real app, get from request
-      userAgent: 'Unknown', // In a real app, get from request
+      ipAddress,
+      userAgent,
     });
 
     // Update the last used time for the access code
