@@ -4,7 +4,7 @@ import os
 import requests
 
 
-if __name__ == "__main__":
+def main():
     # Canvas API URL
     API_URL = "https://ufl.instructure.com/"
     # Canvas API key
@@ -203,3 +203,5 @@ if __name__ == "__main__":
     # for page in pages:
     #     print(page)
 
+if __name__ == "__main__":
+    main()
