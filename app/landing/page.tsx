@@ -38,7 +38,7 @@ export default function Home() {
       {/* Logo section with glassmorphism effect */}
       <a href="/" className="fixed top-6 left-6 flex items-center gap-2 px-4 py-2 bg-zinc-900/50 backdrop-blur-md rounded-full border border-zinc-800/50 shadow-lg z-20 hover:bg-zinc-900/70 transition-colors">
         <ChatLogo className="w-7 h-7 text-blue-500" />
-        <span className="font-semibold text-lg">donno.ai</span>
+        <span className="font-semibold text-lg">OS Chat Bot</span>
       </a>
       
       <div className="container mx-auto px-4 py-8">
