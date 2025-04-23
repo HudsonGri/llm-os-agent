@@ -306,7 +306,7 @@ def main():
 
         filename = file.display_name
         file_path = course.get_folder(file.folder_id).full_name + "/" + filename
-        file_path = file_path[7:] # remove "course " from file path
+        # file_path = file_path[7:] # remove "course " from file path
         url = file.url.split('/download?download_frd')[0]
         _, ext = os.path.splitext(filename)
         full_text = ''
