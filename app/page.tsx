@@ -9,13 +9,19 @@ import { TopicBadge } from '@/components/chat/topic-badge';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ChatHistory } from '@/components/chat/chat-history';
-import { SquarePen, Sparkles, BookOpen, Code, Terminal, RefreshCw, Calendar, File } from 'lucide-react';
+import { SquarePen, Sparkles, BookOpen, Code, Terminal, RefreshCw, Calendar, File, LayoutDashboard } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from 'next/link';
 import { ChatLogo } from '@/components/ui/chat-logo';
 
@@ -287,6 +293,26 @@ export default function Chat() {
   return (
     <div className="flex w-full h-screen bg-zinc-50">
       <div className="flex-1 flex flex-col min-w-0 relative">
+        {/* Dashboard Navigation Button */}
+        <div className="absolute top-4 left-4 z-50">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 w-9 rounded-full p-0">
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="sr-only">Dashboards</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem asChild>
+                <Link href="/admin">Admin Dashboard</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/student">Student Dashboard</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         {/* Add gradient and dot grid pattern background */}
         <div 
           className={`absolute inset-0 bg-gradient-to-t from-zinc-100 to-zinc-50 pointer-events-none transition-opacity duration-250 ${

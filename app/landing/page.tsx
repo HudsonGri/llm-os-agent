@@ -5,7 +5,9 @@ import { Space_Grotesk } from 'next/font/google'
 import { MessageCircle } from 'lucide-react'
 import TypingHeader from './components/TypingHeader'
 import './components/styles.css'
-
+import './styles.css'
+import { ChatLogo } from "@/components/ui/chat-logo"
+import FeatureCards from "./components/FeatureCards"
 // Initialize the font
 const spaceGrotesk = Space_Grotesk({ 
   subsets: ['latin'],
@@ -33,31 +35,14 @@ export default function Home() {
 
   return (
     <main className={`min-h-screen bg-black text-white ${spaceGrotesk.className}`}>
+      {/* Logo section with glassmorphism effect */}
+      <a href="/" className="fixed top-6 left-6 flex items-center gap-2 px-4 py-2 bg-zinc-900/50 backdrop-blur-md rounded-full border border-zinc-800/50 shadow-lg z-20 hover:bg-zinc-900/70 transition-colors">
+        <ChatLogo className="w-7 h-7 text-blue-500" />
+        <span className="font-semibold text-lg">donno.ai</span>
+      </a>
+      
       <div className="container mx-auto px-4 py-8">
-        {/* CSS for animations */}
-        <style jsx global>{`
-          @keyframes subtlePulse {
-            0% { transform: scale(1) rotate(var(--rotation)); opacity: 0.65; }
-            50% { transform: scale(1.03) rotate(var(--rotation)); opacity: 0.95; }
-            100% { transform: scale(1) rotate(var(--rotation)); opacity: 0.65; }
-          }
-          
-          .pulse-animation {
-            animation: subtlePulse 4s ease-in-out infinite;
-          }
-          
-          @keyframes floatLogo {
-            0% { transform: translate(-50%, -50%); }
-            25% { transform: translate(-50%, -50.5%); }
-            50% { transform: translate(-50.25%, -50%); }
-            75% { transform: translate(-49.75%, -50.25%); }
-            100% { transform: translate(-50%, -50%); }
-          }
-          
-          .floating-logo {
-            animation: floatLogo 8s ease-in-out infinite;
-          }
-        `}</style>
+
 
         {/* Main Content */}
         <div className="flex flex-col md:flex-row items-center justify-between py-16 gap-8">
@@ -108,7 +93,7 @@ export default function Home() {
             {/* Integrations */}
             <div className="pt-12">
               <div className="flex items-center gap-4 mb-6">
-                <h3 className="text-2xl text-zinc-400 font-medium">Integrated with</h3>
+                <h3 className="text-2xl text-zinc-400 font-medium">Integrates with</h3>
                 <div className="h-12 w-40 relative">
                   <div 
                     className="absolute inset-0 bg-zinc-300" 
@@ -147,10 +132,6 @@ export default function Home() {
                     className="group relative bg-gradient-to-br from-zinc-800 to-zinc-900 p-3 text-xs overflow-hidden rounded-lg 
                              shadow-lg hover:shadow-xl transition-all duration-300 hover:opacity-100 hover:scale-105
                              border border-zinc-700/50 hover:border-blue-500/30 pulse-animation border-2"
-                    style={{ 
-                      animationDelay: `${getSpiralDelay(i)}s`,
-                      '--rotation': `${rotation}deg`
-                    } as React.CSSProperties}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <p className="relative text-zinc-300 group-hover:text-zinc-100 transition-colors duration-300">
@@ -179,6 +160,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+        <FeatureCards />
       </div>
     </main>
   )

@@ -219,3 +219,16 @@
   }
 }
 
+
+
+@keyframes floatLogo {
+  0% { transform: translate(-50%, -50%); }
+  25% { transform: translate(-50%, -50.5%); }
+  50% { transform: translate(-50.25%, -50%); }
+  75% { transform: translate(-49.75%, -50.25%); }
+  100% { transform: translate(-50%, -50%); }
+}
+
+.floating-logo {
+  animation: floatLogo 8s ease-in-out infinite;
+}

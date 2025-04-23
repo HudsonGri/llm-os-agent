@@ -1,0 +1,21 @@
+@keyframes subtlePulse {
+    0% { transform: scale(1) rotate(var(--rotation)); opacity: 0.65; }
+    50% { transform: scale(1.03) rotate(var(--rotation)); opacity: 0.95; }
+    100% { transform: scale(1) rotate(var(--rotation)); opacity: 0.65; }
+  }
+  
+  .pulse-animation {
+    animation: subtlePulse 4s ease-in-out infinite;
+  }
+  
+  @keyframes floatLogo {
+    0% { transform: translate(-50%, -50%); }
+    25% { transform: translate(-50%, -50.5%); }
+    50% { transform: translate(-50.25%, -50%); }
+    75% { transform: translate(-49.75%, -50.25%); }
+    100% { transform: translate(-50%, -50%); }
+  }
+  
+  .floating-logo {
+    animation: floatLogo 8s ease-in-out infinite;
+  }
